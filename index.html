@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Data Communication Assignment</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      scroll-behavior:smooth;
+    }
+
+    body{
+      font-family: "Segoe UI", sans-serif;
+      background:#f1f5f9;
+      color:#1e293b;
+      line-height:1.7;
+    }
+
+    header{
+      background:#0f172a;
+      padding:18px 8%;
+      position:sticky;
+      top:0;
+      z-index:1000;
+      box-shadow:0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    nav{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .logo{
+      color:#38bdf8;
+      font-size:28px;
+      font-weight:800;
+    }
+
+    .nav-links a{
+      color:white;
+      text-decoration:none;
+      margin-left:22px;
+      font-weight:600;
+      transition:0.3s;
+    }
+
+    .nav-links a:hover{
+      color:#38bdf8;
+    }
+
+    section{
+      padding:80px 8%;
+    }
+
+    .hero{
+      min-height:calc(100vh - 74px);
+      display:grid;
+      grid-template-columns:1.2fr 0.8fr;
+      gap:50px;
+      align-items:center;
+      background:
+        radial-gradient(circle at 85% 20%, rgba(56,189,248,0.22), transparent 28%),
+        linear-gradient(135deg,#eff6ff 0%,#ffffff 55%,#e0f2fe 100%);
+    }
+
+    .hero-text h1{
+      font-size:55px;
+      color:#0f172a;
+      margin-bottom:10px;
+    }
+
+    .hero-text h3{
+      color:#0284c7;
+      margin-bottom:20px;
+      font-size:24px;
+    }
+
+    .hero-text p{
+      font-size:18px;
+      margin-bottom:25px;
+    }
+
+    .btn{
+      display:inline-block;
+      background:#0284c7;
+      color:white;
+      padding:14px 24px;
+      border-radius:10px;
+      text-decoration:none;
+      font-weight:bold;
+      transition:0.3s;
+    }
+
+    .btn:hover{
+      background:#0369a1;
+      transform:translateY(-3px);
+    }
+
+    .hero-image{
+      display:flex;
+      justify-content:center;
+    }
+
+    .profile-card{
+      width:min(100%,390px);
+      background:rgba(255,255,255,0.82);
+      border:1px solid rgba(14,165,233,0.22);
+      border-radius:24px;
+      padding:16px;
+      box-shadow:0 24px 60px rgba(15,23,42,0.18);
+      backdrop-filter:blur(12px);
+      position:relative;
+    }
+
+    .profile-card::before{
+      content:"";
+      position:absolute;
+      inset:14px -14px -14px 14px;
+      border:2px solid #38bdf8;
+      border-radius:24px;
+      z-index:-1;
+    }
+
+    .profile-card img{
+      width:100%;
+      aspect-ratio:4 / 5;
+      object-fit:cover;
+      object-position:center top;
+      border-radius:18px;
+      display:block;
+    }
+
+    .profile-info{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      align-items:center;
+      margin-top:16px;
+      padding:14px 16px;
+      background:#0f172a;
+      color:white;
+      border-radius:16px;
+    }
+
+    .profile-info strong{
+      display:block;
+      font-size:18px;
+    }
+
+    .profile-info span{
+      color:#bae6fd;
+      font-size:14px;
+    }
+
+    .profile-badge{
+      background:#38bdf8;
+      color:#082f49;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .section-title{
+      text-align:center;
+      font-size:38px;
+      margin-bottom:40px;
+      color:#0f172a;
+    }
+
+    .box{
+      background:white;
+      padding:35px;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:25px;
+      margin-top:30px;
+    }
+
+    .card{
+      background:white;
+      padding:25px;
+      border-radius:18px;
+      box-shadow:0 10px 20px rgba(0,0,0,0.08);
+      transition:0.3s;
+    }
+
+    .card:hover{
+      transform:translateY(-5px);
+    }
+
+    .card h3{
+      color:#0284c7;
+      margin-bottom:15px;
+    }
+
+    ul{
+      padding-left:25px;
+    }
+
+    .telegraph{
+      margin-top:35px;
+      background:#f8fafc;
+      border:2px solid #bae6fd;
+      border-radius:16px;
+      padding:32px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .telegraph-diagram{
+      display:grid;
+      grid-template-columns:1fr 1.3fr 1fr;
+      gap:26px;
+      align-items:center;
+      position:relative;
+    }
+
+    .telegraph-diagram::before{
+      content:"";
+      position:absolute;
+      left:16%;
+      right:16%;
+      top:49%;
+      height:6px;
+      background:#0f172a;
+      border-radius:999px;
+      z-index:0;
+    }
+
+    .tele-station{
+      background:white;
+      border:3px solid #0284c7;
+      border-radius:14px;
+      padding:22px;
+      text-align:center;
+      position:relative;
+      z-index:1;
+      box-shadow:0 12px 24px rgba(2,132,199,0.12);
+    }
+
+    .tele-station h3{
+      color:#0284c7;
+      margin-bottom:14px;
+    }
+
+    .tele-key,
+    .tele-sounder{
+      width:150px;
+      height:86px;
+      margin:0 auto 14px;
+      position:relative;
+      border-bottom:8px solid #334155;
+    }
+
+    .tele-key::before{
+      content:"";
+      position:absolute;
+      left:18px;
+      right:18px;
+      top:34px;
+      height:8px;
+      background:#475569;
+      border-radius:999px;
+      transform:rotate(-14deg);
+      transform-origin:left center;
+    }
+
+    .tele-key::after{
+      content:"";
+      position:absolute;
+      right:20px;
+      bottom:8px;
+      width:22px;
+      height:22px;
+      background:#0284c7;
+      border-radius:50%;
+      box-shadow:-92px 0 0 #0284c7;
+    }
+
+    .tele-sounder::before{
+      content:"";
+      position:absolute;
+      left:18px;
+      right:18px;
+      top:18px;
+      height:18px;
+      border:6px solid #475569;
+      border-bottom:0;
+      border-radius:40px 40px 0 0;
+    }
+
+    .tele-sounder::after{
+      content:"";
+      position:absolute;
+      left:36px;
+      right:36px;
+      bottom:10px;
+      height:10px;
+      background:#0284c7;
+      border-radius:999px;
+      box-shadow:0 -18px 0 #38bdf8;
+    }
+
+    .wire-path{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+      position:relative;
+      z-index:1;
+    }
+
+    .wire-label{
+      background:#0f172a;
+      color:white;
+      padding:8px 14px;
+      border-radius:999px;
+      font-weight:bold;
+      text-align:center;
+    }
+
+    .battery{
+      display:flex;
+      align-items:flex-end;
+      gap:8px;
+      height:100px;
+      background:white;
+      border:3px solid #38bdf8;
+      border-radius:14px;
+      padding:18px 22px;
+      box-shadow:0 12px 24px rgba(2,132,199,0.12);
+    }
+
+    .battery span{
+      display:block;
+      width:12px;
+      background:#0f172a;
+      border-radius:999px;
+    }
+
+    .battery span:nth-child(1),
+    .battery span:nth-child(3){
+      height:48px;
+    }
+
+    .battery span:nth-child(2),
+    .battery span:nth-child(4){
+      height:74px;
+      background:#0284c7;
+    }
+
+    .flow-note{
+      text-align:center;
+      margin-top:25px;
+      font-weight:600;
+    }
+
+    .resources a{
+      display:block;
+      margin:14px 0;
+      color:#0284c7;
+      font-weight:bold;
+      text-decoration:none;
+    }
+
+    .resources a:hover{
+      text-decoration:underline;
+    }
+
+    .video-container{
+      margin-top:30px;
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:0 15px 30px rgba(0,0,0,0.15);
+      background:#0f172a;
+      aspect-ratio:16 / 9;
+    }
+
+    iframe{
+      width:100%;
+      height:100%;
+      border:none;
+      display:block;
+    }
+
+    .video-fallback{
+      margin-top:14px;
+      text-align:center;
+    }
+
+    footer{
+      background:#0f172a;
+      color:white;
+      text-align:center;
+      padding:30px;
+      margin-top:50px;
+    }
+
+    @media(max-width:900px){
+
+      .hero{
+        grid-template-columns:1fr;
+        text-align:center;
+        padding-top:50px;
+      }
+
+      .grid{
+        grid-template-columns:1fr;
+      }
+
+      .hero-text h1{
+        font-size:40px;
+      }
+
+      .hero-text h3{
+        font-size:20px;
+      }
+
+      .profile-info{
+        flex-direction:column;
+        gap:8px;
+      }
+
+      .telegraph{
+        padding:24px 18px;
+      }
+
+      .telegraph-diagram{
+        grid-template-columns:1fr;
+      }
+
+      .telegraph-diagram::before{
+        top:11%;
+        bottom:11%;
+        left:50%;
+        right:auto;
+        width:6px;
+        height:auto;
+      }
+
+      .nav-links{
+        margin-top:15px;
+      }
+
+      .nav-links a{
+        display:inline-block;
+        margin:8px;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+
+  <nav>
+
+    <div class="logo">
+      Data Communication
+    </div>
+
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#summary">Summary</a>
+      <a href="#telegraph">Telegraph</a>
+      <a href="#resources">Resources</a>
+      <a href="#inspiration">Inspiration</a>
+    </div>
+
+  </nav>
+
+</header>
+
+<section class="hero" id="about">
+
+  <div class="hero-text">
+
+    <h1>Addo Eric</h1>
+
+    <h3>Student ID: PUIT/24210065</h3>
+
+    <p>
+      I am an Information Technology student passionate about networking,
+      communication systems, and digital technologies. This web page
+      summarizes everything I studied in Data Communication including
+      transmission media, communication models, telegraph systems,
+      networking devices, and internet protocols.
+    </p>
+
+    <a class="btn"
+       href="https://github.com/addoeric467-hub"
+       target="_blank">
+
+       Visit My GitHub
+
+    </a>
+
+  </div>
+
+  <div class="hero-image">
+
+    <div class="profile-card">
+
+      <img src="profile.png" alt="Addo Eric">
+
+      <div class="profile-info">
+        <div>
+          <strong>Addo Eric</strong>
+          <span>Information Technology Student</span>
+        </div>
+        <div class="profile-badge">Data Communication</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<section id="summary">
+
+  <h2 class="section-title">
+    Summary of Data Communication
+  </h2>
+
+  <div class="box">
+
+    <p>
+      Data communication refers to the exchange of information between
+      devices through communication channels. It enables computers,
+      smartphones, servers, and networks to transmit and receive data
+      efficiently. Data communication is important in education,
+      healthcare, banking, online learning, businesses, and social media.
+    </p>
+
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+
+      <h3>Transmission Media</h3>
+
+      <p>
+        Transmission media are channels used to carry data signals.
+        Examples include twisted pair cables, fibre optics,
+        radio waves, and microwaves.
+      </p>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Network Devices</h3>
+
+      <p>
+        Routers, switches, modems, hubs, and access points help
+        devices communicate and share information within networks.
+      </p>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Communication Models</h3>
+
+      <p>
+        The OSI and TCP/IP models explain how information moves
+        from sender to receiver through communication layers.
+      </p>
+
+    </div>
+
+  </div>
+
+</section>
+
+<section>
+
+  <h2 class="section-title">
+    Five Key Areas Studied
+  </h2>
+
+  <div class="box">
+
+    <ul>
+      <li>Meaning and importance of data communication</li>
+      <li>Types of networks such as LAN, MAN, and WAN</li>
+      <li>Guided and unguided transmission media</li>
+      <li>Network topologies such as star, bus, ring, and mesh</li>
+      <li>Internet protocols, IP addresses, and network security</li>
+    </ul>
+
+  </div>
+
+</section>
+
+<section id="telegraph">
+
+  <h2 class="section-title">
+    Diagram of a Telegraph
+  </h2>
+
+  <div class="box">
+
+    <p style="text-align:center;">
+      The telegraph was one of the earliest communication systems
+      used to send messages across long distances using electrical signals.
+    </p>
+
+    <div class="telegraph" aria-label="Telegraph communication diagram">
+
+      <div class="telegraph-diagram">
+
+        <div class="tele-station">
+          <div class="tele-key" aria-hidden="true"></div>
+          <h3>Telegraph Key</h3>
+          <p>Sender taps short and long signals.</p>
+        </div>
+
+        <div class="wire-path">
+          <div class="wire-label">Electric Wire</div>
+          <div class="battery" aria-label="Battery power source">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="wire-label">Battery Power</div>
+        </div>
+
+        <div class="tele-station">
+          <div class="tele-sounder" aria-hidden="true"></div>
+          <h3>Sounder / Receiver</h3>
+          <p>Receiver changes signals into a message.</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <p class="flow-note">
+      Sender presses the key &rarr; current moves through the wire
+      &rarr; receiver produces the message.
+    </p>
+
+  </div>
+
+</section>
+
+<section id="resources">
+
+  <h2 class="section-title">
+    Resources and Assignment Links
+  </h2>
+
+  <div class="box resources">
+
+    <p>
+      Below are the important links for this assignment:
+    </p>
+
+    <a href="https://www.turnitin.com/class/52698404/student_home?lang=en_us"
+       target="_blank">
+
+       Assignment / Turnitin Link
+
+    </a>
+
+    <a href="https://github.com/addoeric467-hub"
+       target="_blank">
+
+       My GitHub Account
+
+    </a>
+
+    <a href="https://youtu.be/1r2eOpkBTOo?si=x4D1N6rJFYoZuM1E"
+       target="_blank">
+
+       Data Communication Video
+
+    </a>
+
+    <div class="video-container">
+
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/1r2eOpkBTOo?rel=0&modestbranding=1"
+        title="Data Communication Video"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen>
+      </iframe>
+
+    </div>
+
+    <p class="video-fallback">
+      If the video does not load, open it directly:
+      <a href="https://www.youtube.com/watch?v=1r2eOpkBTOo" target="_blank">
+        Watch on YouTube
+      </a>
+    </p>
+
+  </div>
+
+</section>
+
+<section id="inspiration">
+
+  <h2 class="section-title">
+    What Inspires Me
+  </h2>
+
+  <div class="box">
+
+    <p>
+      I am inspired by how technology connects people around the world
+      and improves communication. Data communication has transformed
+      education, businesses, healthcare, and global networking.
+      My goal is to become a professional software and network engineer
+      who builds modern systems that solve real-world problems.
+    </p>
+
+  </div>
+
+</section>
+
+<footer>
+
+  <p>
+    Data Communication Assignment | Addo Eric | PUIT/24210065
+  </p>
+
+</footer>
+
+</body>
+</html>
