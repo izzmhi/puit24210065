@@ -1,0 +1,11 @@
+# Used only when the API is served by Apache (XAMPP/Laragon virtual host or Alias).
+# When using `php -S` (recommended for local development) this file is ignored.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Apache hides the Authorization header from PHP unless it is passed on explicitly.
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [L]
+</IfModule>

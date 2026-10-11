@@ -1,0 +1,25 @@
+# Secrets and local configuration - never commit these
+.env
+.env.*
+!.env.example
+backend/.env
+
+# Node / Expo
+node_modules/
+mobile/dist/
+mobile/.expo/
+mobile/expo-env.d.ts
+*.tsbuildinfo
+npm-debug.log*
+
+# Logs and temporary files
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Earlier prototype moved aside by the rewrite (safe to delete)
+_legacy_prototype/
