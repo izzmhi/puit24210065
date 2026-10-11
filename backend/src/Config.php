@@ -15,7 +15,7 @@ final class Config
     /** Settings that may be supplied through real environment variables. */
     private const KEYS = [
         'APP_ENV', 'APP_PEPPER',
-        'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS',
+        'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS', 'DB_SSL_CA',
         'CORS_ALLOWED_ORIGINS',
         'OTP_DELIVERY',
         'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM',

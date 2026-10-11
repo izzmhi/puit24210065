@@ -1,0 +1,9 @@
+node_modules
+mobile/node_modules
+mobile/dist
+mobile/.expo
+tools
+_legacy_prototype
+backend/.env
+backend/tests
+REPORT.pdf

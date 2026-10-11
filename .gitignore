@@ -27,3 +27,7 @@ _legacy_prototype/
 # php-wasm runner working copies
 tools/wasm-runner/.work/
 
+# Vercel CLI link and pulled settings
+.vercel
+.env*
+!.env.example

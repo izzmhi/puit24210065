@@ -11,6 +11,30 @@ A public Vercel link on its own only shows the interface. **Sign-in works online
 deployed somewhere and the website is pointed at them.** Until you have done and tested that, do not claim the deployed
 site works end to end.
 
+## 0. What the project `puit24210065` uses: API on Vercel functions + Aiven MySQL
+
+Vercel does not run PHP as a normal always-on server, but the community runtime
+[`vercel-php`](https://github.com/vercel-community/php) runs PHP inside Vercel Functions. The repository-root
+`vercel.json` uses it:
+
+* `api/index.php` is a function (`vercel-php@0.7.4`, PHP 8.3). It just includes `backend/public/index.php`, so it is the
+  same code as the local API. `includeFiles` bundles `backend/`; `excludeFiles` keeps the web app's `node_modules` out
+  (otherwise the function is over Vercel's 250 MB limit).
+* Rewrites send `/api/...` to that function and every other path to the web app's `index.html`. The website and the API
+  are on the **same origin**, so the session cookie is first-party (`SameSite=Lax`) and the web build's default API
+  address `/api` is correct (no `EXPO_PUBLIC_API_URL` needed).
+* The database is an external **Aiven MySQL** service. Aiven requires TLS and signs its certificates with a per-project
+  CA, so its `ca.pem` (public, not secret) is committed as `backend/certs/aiven-ca.pem` and `DB_SSL_CA=certs/aiven-ca.pem`.
+* Settings are Vercel **Environment Variables** (Production), not a `.env` file: `APP_ENV=production`, `APP_PEPPER`
+  (sensitive), `CORS_ALLOWED_ORIGINS=https://puit24210065.vercel.app`, `TRUST_PROXY=true` (Vercel sets
+  `X-Forwarded-For`), `COOKIE_SECURE=true`, `COOKIE_SAMESITE=Lax`, `OTP_DELIVERY=smtp` with Gmail (`SMTP_HOST=smtp.gmail.com`,
+  `SMTP_PORT=587`, `SMTP_SECURE=tls`, `SMTP_USER`, `SMTP_PASS` = a Gmail App Password, `SMTP_FROM`), and `DB_HOST`,
+  `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_SSL_CA` for Aiven.
+* Limitations: each request may start a fresh function (a "cold start" of a second or two); rate-limit counters live in
+  MySQL so they still work across function instances; the free database may pause when idle.
+
+The sections below describe the alternative of hosting the API on ordinary PHP hosting.
+
 ## 1. Deploy the web app to Vercel
 
 ### Settings (Project → Settings → General / Build)
