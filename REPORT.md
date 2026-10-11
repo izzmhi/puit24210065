@@ -40,6 +40,9 @@ public link.
 | Online database | Aiven MySQL 8.4 | Managed MySQL reachable from Vercel, with an encrypted (TLS) connection. |
 | Online email | Gmail SMTP with an App Password | Delivers the one-time codes on the public site. |
 
+Development tools: Visual Studio Code, Git and GitHub, and an AI coding assistant (Anthropic's Claude), which was used to
+help write the code, tests and documentation.
+
 ## 3. System architecture
 
 ```
@@ -305,24 +308,39 @@ The deployed site at https://puit24210065.vercel.app was tested on 11 October 20
   accepted") because the App Password had been created in a different Google account from the sender address. The
   application handled it safely: it answered 503 and kept no code. Using the matching account fixed it.
 
-### 12.5 Screenshot checklist (to be captured by the student from the real system)
+### 12.5 Screenshots
 
-No screenshots are included in this document yet. Capture these after starting the backend and the app, and insert
-them here:
+Figures 1–10 were captured from the web version of the app running against the real PHP API on the local computer
+(`tools/wasm-runner`, development mode, so the code is shown on screen instead of being emailed). Figure 11 is from the
+online MySQL database.
 
-- [ ] Registration screen showing validation errors
-- [ ] Registration success message on the sign-in screen
-- [ ] Sign-in screen with an "Invalid email or password" error
-- [ ] Verification screen (development mode box, or the email containing the code)
-- [ ] Wrong-code error with remaining attempts
-- [ ] Dashboard of a standard user
-- [ ] Profile page showing the role
-- [ ] Admin page as administrator (user list)
-- [ ] Admin page as a standard user ("Access denied")
-- [ ] phpMyAdmin `users` table showing hashed passwords (not plaintext)
-- [ ] phpMyAdmin `sessions` table showing `token_hash` and a revoked session after logout
-- [ ] Terminal output of `php tests/run.php`
-- [ ] The app on a phone and in a desktop browser
+<p><b>Figure 1.</b> Login screen.<br><img src="docs/screenshots/01-login.png" width="560"></p>
+
+<p><b>Figure 2.</b> Registration with client-side validation errors.<br><img src="docs/screenshots/02-register-validation.png" width="560"></p>
+
+<p><b>Figure 3.</b> After a successful registration the user is returned to the login screen with a message.<br><img src="docs/screenshots/03-registered.png" width="560"></p>
+
+<p><b>Figure 4.</b> Two-factor step after the correct password. In development mode the code is shown in the yellow box;
+online it is emailed.<br><img src="docs/screenshots/04-verify-code.png" width="560"></p>
+
+<p><b>Figure 5.</b> A wrong code is refused (the server also counts the attempt).<br><img src="docs/screenshots/05-wrong-code.png" width="560"></p>
+
+<p><b>Figure 6.</b> Dashboard of a standard user after password + code.<br><img src="docs/screenshots/06-dashboard-user.png" width="560"></p>
+
+<p><b>Figure 7.</b> Profile page showing the role.<br><img src="docs/screenshots/07-profile.png" width="560"></p>
+
+<p><b>Figure 8.</b> A standard user who opens the admin page by typing its address is refused by the server (403).<br><img src="docs/screenshots/08-admin-denied.png" width="560"></p>
+
+<p><b>Figure 9.</b> The admin page for an administrator, listing registered users (no password data is sent).<br><img src="docs/screenshots/09-admin-users.png" width="560"></p>
+
+<p><b>Figure 10.</b> The dashboard at phone width.<br><img src="docs/screenshots/10-phone-dashboard.png" width="230"></p>
+
+<p><b>Figure 11.</b> The <code>users</code> table in the online MySQL database. The password column contains only the
+Argon2id hash produced by <code>password_hash()</code>; the salt is inside the hash and the pepper is not stored.<br>
+<img src="docs/screenshots/11-database-hashes.png" width="600"></p>
+
+Still to add from a local XAMPP or Laragon run: the terminal output of `php tests/run.php`, and the app running in Expo
+Go on a phone.
 
 ## 13. Limitations and future improvements
 

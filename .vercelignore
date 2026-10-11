@@ -7,3 +7,4 @@ _legacy_prototype
 backend/.env
 backend/tests
 REPORT.pdf
+mobile/.env
