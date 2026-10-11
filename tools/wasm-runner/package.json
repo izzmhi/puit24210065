@@ -1,0 +1,14 @@
+{
+  "name": "wasm-runner",
+  "private": true,
+  "type": "module",
+  "description": "Runs the PHP backend with PHP 8.3 compiled to WebAssembly and SQLite, for computers where PHP/MySQL cannot be installed.",
+  "scripts": {
+    "test": "node run-tests.mjs",
+    "api": "node serve-api.mjs"
+  },
+  "dependencies": {
+    "@php-wasm/node": "3.1.57",
+    "@php-wasm/universal": "3.1.57"
+  }
+}

@@ -191,9 +191,9 @@ scrolls sideways on narrow screens. Forms show a loading state on the button, fi
 
 ## 12. Testing
 
-### 12.1 Automated backend tests (PHP) — written, **not yet run**
+### 12.1 Automated backend tests (PHP)
 
-`backend/tests/run.php` contains 60 tests that call the API kernel directly against a separate MySQL database
+`backend/tests/run.php` contains 60 tests that call the API kernel directly against a separate test database
 (`login_auth_test`). They cover every item required by the brief:
 
 | Requirement | Test file |
@@ -207,17 +207,33 @@ scrolls sideways on narrow screens. Forms show a loading state on the button, fi
 | CORS (allowed origin, rejected origin, never `*`), 404/405/400/413/415, security headers, rate limits (account, IP, registration, OTP guessing) | `http_and_abuse.php` |
 | Configuration errors handled safely (missing/short/placeholder pepper, dev OTP in production, wildcard CORS, insecure cookies, bad SMTP, database down) and no dev OTP in production responses | `configuration.php` |
 
-**These tests have not been executed.** The computer on which the project was prepared had no PHP or MySQL installed,
-and Windows Application Control blocked a downloaded `php.exe`. The only checks applied to the PHP code were the editor's
-static analysis (no errors or warnings reported on the files it analysed) and a careful manual review. Therefore the PHP
-code may still contain bugs that the tests would reveal. To obtain real results, run on a machine with XAMPP or Laragon:
+**How the tests were run.** On the development computer, Windows Smart App Control blocked `php.exe`, and no MySQL
+server could be started. The suite was therefore run with `tools/wasm-runner` (`npm test`): PHP 8.3 compiled to
+WebAssembly, running inside Node.js, with an in-memory **SQLite** database instead of MySQL. A small translation layer
+(`tools/wasm-runner/compat.php`) rewrites the few MySQL-only statements (`ON DUPLICATE KEY UPDATE`, `TRUNCATE`,
+`SET FOREIGN_KEY_CHECKS`, one `DATE_ADD` in a test). The application code itself is not changed. Because this PHP build has
+no Argon2 support, the bcrypt fallback was the algorithm exercised.
+
+Result:
+
+```
+60 passed, 0 failed (881 assertions)
+```
+
+To check that the tests really detect faults, three bugs were deliberately introduced in a copy of the code, one at a
+time. Each was caught: removing the admin role check failed 2 authorization tests; making codes valid for 99,999 seconds
+failed the five-minute expiry test; and no longer marking codes as used failed 4 OTP tests (including "a code can be used
+only once").
+
+**Not yet verified against MySQL.** The MySQL schema (`database/schema.sql`), the MySQL form of the rate-limit query and
+the duplicate-key error code (1062) were not exercised by this run. On a computer where XAMPP or Laragon works, run:
 
 ```
 cd backend
 php tests/run.php
 ```
 
-and paste the real output here:
+and add the output here:
 
 ```
 (paste the output of php tests/run.php here, including the final "N passed, M failed" line)
@@ -232,13 +248,28 @@ and paste the real output here:
 | Production web build | `npx expo export --platform web` | Succeeded; output in `mobile/dist` (one JavaScript bundle, about 1.1 MB, and `index.html`) |
 | Secrets in build output | search of the built JavaScript for `DB_PASS`, `APP_PEPPER`, `SMTP_PASS` | None found |
 
-### 12.3 Browser test of the interface against a mock API — what it does and does not prove
+### 12.3 End-to-end tests over HTTP and in a browser
 
-To check the interface, the web build was opened in a headless Edge browser and driven through a script in three sessions
-(desktop standard user, phone-sized administrator, desktop administrator). The script used a small **mock** API written
-only for this check, not the PHP backend, so it demonstrates the behaviour of the **interface**, not of the real server.
-The interface was later simplified to its current plain design and the same script was run again on the final version:
-60 scripted checks passed and none failed. The checks were: redirect to sign-in when signed out; empty and weak inputs rejected on the client;
+The unit tests above call the API classes directly, so they skip the code that reads real HTTP requests and writes real
+responses (headers, cookies, `public/index.php`). Two further checks covered that path, using the real PHP API served by
+`tools/wasm-runner` (`npm run api`), again with SQLite instead of MySQL:
+
+* **HTTP checks (26 passed, 0 failed):** register, duplicate and invalid registration, wrong password, login with
+  code, wrong code with attempts remaining, correct code, code reuse refused, bearer-token session, normal user refused
+  on the admin route (403), anonymous refused (401), logout and revocation, CORS for allowed and unknown origins, a
+  browser sign-in from a disallowed origin refused, the `HttpOnly; SameSite=Lax` session cookie, promotion with the real
+  `bin/set-role.php`, the admin user list without password hashes, and cookie logout refused without the CSRF headers.
+* **Browser test (60 passed, 0 failed):** the web build was opened in a headless Edge browser and driven through a
+  script in three sessions (desktop standard user, phone-sized administrator, desktop administrator) against the real
+  PHP API.
+
+While these were being set up, a database-locking error appeared. It was caused by the test environment (SQLite file
+locks on a mounted Windows folder), not by the application, and was fixed in the runner. Some early runs also failed
+one step each because the script checked the page before the server had finished hashing the password; the script was
+changed to wait for each result. No bugs were found in the PHP application code.
+
+Earlier, before the backend could be run, the same browser script was used against a small mock API to develop the
+interface. The browser checks were: redirect to sign-in when signed out; empty and weak inputs rejected on the client;
 registration; generic error for a wrong password; moving to the code screen; wrong then correct code; dashboard and role
 display; session survives a reload through the cookie; no token in `localStorage` or `sessionStorage`; the session cookie is
 not readable from JavaScript; profile page; the administration page listing users for an administrator and showing
@@ -247,8 +278,8 @@ API address was wrong, and a spurious "session ended" message at start-up) were 
 
 ### 12.4 Screenshot checklist (to be captured by the student from the real system)
 
-No screenshots are included, because the real system could not be run during preparation. Capture these after starting
-the backend and the app, and insert them here:
+No screenshots are included in this document yet. Capture these after starting the backend and the app, and insert
+them here:
 
 - [ ] Registration screen showing validation errors
 - [ ] Registration success message on the sign-in screen
@@ -266,7 +297,7 @@ the backend and the app, and insert them here:
 
 ## 13. Limitations and future improvements
 
-* The backend tests have not been run by the author of this document; results must be added (section 12.1).
+* The backend tests were run with PHP in WebAssembly against SQLite, not yet against MySQL (section 12.1).
 * Email delivery through SMTP is implemented but has not been tested against a live mail server.
 * The pepper is a single secret; rotating it would require a re-hash migration (for example storing a pepper version
   with each hash) or forced password resets.
@@ -290,9 +321,9 @@ authorization depends on a role that the server reads from the database on every
 protected with a per-password salt plus a server-side pepper. Sessions are random, stored only as hashes, expire and can
 be revoked, and the web version avoids storing tokens where scripts can read them.
 
-The interface was built, type-checked, unit-tested, compiled for the web, and exercised in a browser against a mock server.
-The PHP backend, with a 60-test suite, is complete and documented but still needs to be run on a computer with PHP and
-MySQL before its results can be claimed.
+The interface was built, type-checked, unit-tested and compiled for the web. The backend's 60 tests pass, and the whole
+system was tested end to end over HTTP and in a browser with the real PHP code. These runs used SQLite in place of MySQL,
+so a final run against MySQL is still needed.
 
 ## 15. Instructions for running the application
 

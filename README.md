@@ -28,14 +28,14 @@ login-auth-assignment/
 │  ├─ src/             API client, auth state, UI components
 │  └─ tests/           client unit tests
 ├─ docs/               API.md, DEPLOYMENT.md
+├─ tools/wasm-runner/  runs the PHP backend without installing PHP (see "No PHP on this computer?")
 └─ REPORT.md           the written report for submission
 ```
 
-> **Honest status:** the Expo app, TypeScript checks, unit tests and the web build were run and pass (see
-> [REPORT.md](REPORT.md), section 12). The PHP backend and its test suite are written and ready, but could not be
-> executed in the environment where the project was prepared (PHP and MySQL were not installed and the machine
-> blocked running a downloaded `php.exe`). **Run `php tests/run.php` on your own computer (Step 5) and use the real
-> output in your report.**
+> **Test status:** the backend suite (60 tests) passes when run with PHP 8.3 in WebAssembly against SQLite, and
+> the web app passes an end-to-end browser test against that real PHP API (see [REPORT.md](REPORT.md), section 12).
+> It has **not yet been run against a real MySQL server**. Run `php tests/run.php` with XAMPP or Laragon (Step 5)
+> to confirm the MySQL-specific parts too.
 
 ---
 
@@ -180,6 +180,27 @@ effect immediately.
 Start Laragon (**Start All**). Use *Terminal* from Laragon, then follow Steps 3–6 unchanged. If you would rather use
 Laragon's Apache, point a virtual host's document root at `backend/public` and use that site's URL plus `/api` as the API
 address; `public/.htaccess` is already prepared for Apache.
+
+### No PHP on this computer? (Windows Smart App Control)
+
+Windows 11 **Smart App Control** can block `php.exe` ("An Application Control policy has blocked this file"). That
+happened on the computer this project was prepared on. `tools/wasm-runner` runs the same backend code with PHP 8.3
+compiled to WebAssembly, inside Node.js, so nothing needs to be installed except Node:
+
+```powershell
+cd tools\wasm-runner
+npm install
+npm test                                          # runs backend/tests (60 tests)
+npm run api -- --admin=you@example.com            # real PHP API on http://localhost:8000/api
+```
+
+Then start the app as in Step 6 (`npx expo start`, press `w`). Register `you@example.com` and it becomes an admin
+automatically; other accounts are normal users. You can also type `admin someone@example.com` in the API window.
+
+Limitations: it uses **SQLite instead of MySQL** (a small translation layer in `tools/wasm-runner/compat.php` handles
+the few MySQL-only statements), it always runs in development mode with the code shown on screen, and the data is lost
+when you stop it. It is for local testing and demonstrations only; your report should still include a run against
+MySQL if you can get XAMPP or Laragon working.
 
 ---
 

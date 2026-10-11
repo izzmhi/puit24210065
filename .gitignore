@@ -23,3 +23,7 @@ Thumbs.db
 
 # Earlier prototype moved aside by the rewrite (safe to delete)
 _legacy_prototype/
+
+# php-wasm runner working copies
+tools/wasm-runner/.work/
+
