@@ -19,7 +19,7 @@ final class Config
         'CORS_ALLOWED_ORIGINS',
         'OTP_DELIVERY',
         'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM',
-        'SESSION_TTL_MINUTES', 'COOKIE_SECURE', 'COOKIE_SAMESITE', 'TRUST_PROXY',
+        'SESSION_TTL_MINUTES', 'COOKIE_SECURE', 'COOKIE_SAMESITE', 'TRUST_PROXY', 'ADMIN_EMAILS',
     ];
 
     /** @param array<string,string> $values */
@@ -169,6 +169,13 @@ final class Config
         foreach ($this->allowedOrigins() as $origin) {
             if (!preg_match('#^https?://[A-Za-z0-9.\-]+(:[0-9]{1,5})?$#', $origin)) {
                 $errors[] = 'CORS_ALLOWED_ORIGINS must be a comma-separated list of exact origins (no wildcards, no paths)';
+                break;
+            }
+        }
+
+        foreach ($this->list('ADMIN_EMAILS') as $adminEmail) {
+            if (filter_var($adminEmail, FILTER_VALIDATE_EMAIL) === false) {
+                $errors[] = 'ADMIN_EMAILS must be a comma-separated list of email addresses';
                 break;
             }
         }

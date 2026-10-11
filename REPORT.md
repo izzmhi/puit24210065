@@ -3,6 +3,7 @@
 **Student name:** Addo Eric  
 **Student number:** PUIT24210065  
 **Institution:** Pentecost University  
+**Faculty:** FESAC  
 **Course:** Information Technology  
 **Date:** October 2026
 
@@ -149,6 +150,9 @@ session, whatever the client code or request contains. Changing a role in the da
 
 Public registration cannot create administrators. The first administrator is created on the server by registering
 normally and then running `php bin/set-role.php you@example.com admin`; only someone with access to the server can do this.
+Alternatively, the server setting `ADMIN_EMAILS` lists administrator email addresses. A listed account is promoted only
+after a successful login with both the password and the emailed code, which proves the person controls that inbox. The
+name a user types and the act of registering never grant the admin role. The online version uses this setting.
 
 ## 9. Salt and pepper password protection
 
@@ -203,7 +207,7 @@ scrolls sideways on narrow screens. Forms show a loading state on the button, fi
 
 ### 12.1 Automated backend tests (PHP)
 
-`backend/tests/run.php` contains 60 tests that call the API kernel directly against a separate test database
+`backend/tests/run.php` contains 63 tests that call the API kernel directly against a separate test database
 (`login_auth_test`). They cover every item required by the brief:
 
 | Requirement | Test file |
@@ -227,7 +231,7 @@ no Argon2 support, the bcrypt fallback was the algorithm exercised.
 Result:
 
 ```
-60 passed, 0 failed (881 assertions)
+63 passed, 0 failed (894 assertions)
 ```
 
 To check that the tests really detect faults, three bugs were deliberately introduced in a copy of the code, one at a
@@ -369,7 +373,7 @@ authorization depends on a role that the server reads from the database on every
 protected with a per-password salt plus a server-side pepper. Sessions are random, stored only as hashes, expire and can
 be revoked, and the web version avoids storing tokens where scripts can read them.
 
-The interface was built, type-checked, unit-tested and compiled for the web. The backend's 60 tests pass, and the whole
+The interface was built, type-checked, unit-tested and compiled for the web. The backend's 63 tests pass, and the whole
 system was tested end to end over HTTP and in a browser with the real PHP code, using SQLite in place of MySQL. The
 online version was then tested against real MySQL with real emailed codes, and sign-in works there. The full test suite
 has still to be run against a local XAMPP or Laragon MySQL.

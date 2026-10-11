@@ -320,6 +320,7 @@ final class AuthService
         }
 
         $this->limiter->clear($userKey);
+        $this->promoteListedAdmin((int) $row['user_id']);
         $user = $this->findUser((int) $row['user_id']);
 
         return ['token' => $token, 'expires_at' => (string) Util::iso(Util::fmt($expires)), 'user' => $user];
@@ -328,6 +329,25 @@ final class AuthService
     private function otpHash(string $challengeId, string $otp): string
     {
         return hash_hmac('sha256', $challengeId . ':' . $otp, $this->otpKey);
+    }
+
+    /**
+     * Emails listed in the server setting ADMIN_EMAILS become admin, but only here: after the
+     * password AND the emailed code were correct, which proves the person controls that inbox.
+     * Registering with a listed email (or any name) never gives admin by itself.
+     */
+    private function promoteListedAdmin(int $userId): void
+    {
+        $admins = array_map('strtolower', $this->config->list('ADMIN_EMAILS'));
+        if ($admins === []) {
+            return;
+        }
+        $stmt = $this->pdo->prepare('SELECT email FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $email = $stmt->fetchColumn();
+        if (is_string($email) && in_array(strtolower($email), $admins, true)) {
+            $this->pdo->prepare("UPDATE users SET role = 'admin' WHERE id = ? AND role <> 'admin'")->execute([$userId]);
+        }
     }
 
     /* --------------------------------------------------------- sessions and roles */

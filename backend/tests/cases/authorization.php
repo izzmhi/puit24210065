@@ -81,6 +81,35 @@ test('admin: pagination parameters are bounded and safely parsed', function (Tes
     Assert::same(4, count($junk->body['users']));
 });
 
+test('admin emails: a listed email becomes admin only after password + code, never by registering', function (TestApp $app) {
+    $app = Env::app(['ADMIN_EMAILS' => 'Boss@Example.com, second@example.com']);
+
+    $reg = $app->request('POST', '/api/register', ['name' => 'The Boss', 'email' => 'boss@example.com', 'password' => Env::PASSWORD]);
+    Assert::same('user', $reg->body['user']['role'], 'registering does not give admin');
+
+    // Password correct but code not entered yet: still a normal user in the database.
+    $app->request('POST', '/api/login', ['email' => 'boss@example.com', 'password' => Env::PASSWORD]);
+    Assert::same('user', $app->row('SELECT role FROM users WHERE email = ?', ['boss@example.com'])['role']);
+
+    $token = $app->signIn('boss@example.com');
+    $me = $app->request('GET', '/api/me', null, $app->bearer($token));
+    Assert::same('admin', $me->body['user']['role'], 'admin after the emailed code');
+    Assert::same(200, $app->request('GET', '/api/admin/users', null, $app->bearer($token))->status);
+});
+
+test('admin emails: the name does not matter and unlisted emails stay users', function (TestApp $app) {
+    $app = Env::app(['ADMIN_EMAILS' => 'boss@example.com']);
+    $app->request('POST', '/api/register', ['name' => 'Eric Addo', 'email' => 'someone@example.com', 'password' => Env::PASSWORD]);
+    $token = $app->signIn('someone@example.com');
+    $me = $app->request('GET', '/api/me', null, $app->bearer($token));
+    Assert::same('user', $me->body['user']['role'], 'a name never grants admin');
+    Assert::same(403, $app->request('GET', '/api/admin/users', null, $app->bearer($token))->status);
+});
+
+test('admin emails: invalid entries are refused at start-up', function (TestApp $app) {
+    Assert::throws(App\ConfigException::class, fn() => Env::config(['ADMIN_EMAILS' => 'boss@example.com, not-an-email']));
+});
+
 test('http: /me returns only public fields for the current user', function (TestApp $app) {
     $app->createUser('student@example.com');
     $token = $app->signIn('student@example.com');
