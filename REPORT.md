@@ -3,8 +3,7 @@
 **Student name:** Addo Eric  
 **Student number:** PUIT24210065  
 **Institution:** Pentecost University  
-**Course / module:** ______________________  
-**Lecturer:** ______________________  
+**Course:** Information Technology  
 **Date:** October 2026
 
 ---
