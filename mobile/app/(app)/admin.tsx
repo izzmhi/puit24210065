@@ -43,7 +43,7 @@ export default function Admin() {
       {error ? <Message kind="error">{error}</Message> : null}
 
       {data ? (
-        <Box top>
+        <Box>
           <Text style={styles.text}>
             Total users: {data.total} ({data.summary.admins} admin, {data.summary.users} user). Active sessions:{' '}
             {data.summary.active_sessions}.

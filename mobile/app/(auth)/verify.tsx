@@ -61,7 +61,7 @@ export default function Verify() {
 
   return (
     <View style={styles.form}>
-      <Box top>
+      <Box>
         <Text style={styles.formHeading}>Verification code</Text>
         <Text style={styles.formIntro}>
           {pending.delivery === 'email'

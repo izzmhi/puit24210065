@@ -40,7 +40,7 @@ export default function SignIn() {
 
   return (
     <View style={styles.form}>
-      <Box top>
+      <Box>
         <Text style={styles.formHeading}>Login</Text>
         <Text style={styles.formIntro}>Enter your email and password to continue.</Text>
 

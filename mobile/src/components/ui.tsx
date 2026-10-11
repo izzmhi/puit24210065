@@ -57,8 +57,8 @@ export function Message({ kind, children }: { kind: keyof typeof messageColors; 
   );
 }
 
-export function Box({ children, top }: { children: React.ReactNode; top?: boolean }) {
-  return <View style={[styles.box, top && styles.boxTop]}>{children}</View>;
+export function Box({ children }: { children: React.ReactNode }) {
+  return <View style={styles.box}>{children}</View>;
 }
 
 // One "label | value" line inside a box.

@@ -12,7 +12,7 @@ export default function Dashboard() {
     <View style={{ width: '100%', maxWidth: 560, alignSelf: 'center' }}>
       <Text style={styles.heading}>Dashboard</Text>
 
-      <Box top>
+      <Box>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Avatar name={user.name} />
           <View style={{ flex: 1 }}>

@@ -31,7 +31,6 @@ export const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
   },
-  boxTop: { borderTopWidth: 3, borderTopColor: BLUE },
   formHeading: { fontSize: 20, fontWeight: 'bold', color: '#222222' },
   formIntro: { fontSize: 14, color: '#555555', marginTop: 4, marginBottom: 6 },
   divider: { height: 1, backgroundColor: '#e3e7ed', marginVertical: 14 },

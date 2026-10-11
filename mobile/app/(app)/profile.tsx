@@ -11,7 +11,7 @@ export default function Profile() {
     <View style={{ width: '100%', maxWidth: 560, alignSelf: 'center' }}>
       <Text style={styles.heading}>Profile</Text>
 
-      <Box top>
+      <Box>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
           <Avatar name={user.name} />
           <Text style={styles.name}>{user.name}</Text>

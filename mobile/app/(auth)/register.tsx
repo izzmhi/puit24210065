@@ -57,7 +57,7 @@ export default function Register() {
 
   return (
     <View style={styles.form}>
-      <Box top>
+      <Box>
         <Text style={styles.formHeading}>Register</Text>
         <Text style={styles.formIntro}>Fill in the form to create a new account.</Text>
 
