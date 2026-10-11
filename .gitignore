@@ -29,5 +29,7 @@ tools/wasm-runner/.work/
 
 # Vercel CLI link and pulled settings
 .vercel
+.vercel-old-account
 .env*
 !.env.example
+
