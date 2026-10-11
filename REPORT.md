@@ -22,7 +22,8 @@ The objectives, taken from the assignment brief, were to implement:
 4. **Salt and pepper**: passwords are stored using a salted hash combined with a secret server-side pepper.
 
 The system has a mobile and web interface built with Expo, and a PHP and MySQL backend that runs locally on XAMPP or
-Laragon. A web version of the interface is prepared for Vercel so that it can be submitted as a public link.
+Laragon. The same code is also deployed online at **https://puit24210065.vercel.app**, so that it can be tried from a
+public link.
 
 ## 2. Technologies used
 
@@ -35,7 +36,9 @@ Laragon. A web version of the interface is prepared for Vercel so that it can be
 | Database | MySQL / MariaDB with PDO | Prepared statements, foreign keys, unique indexes. |
 | Password hashing | `password_hash()` / `password_verify()`, Argon2id (bcrypt fallback) | Built into PHP, adaptive and salted. |
 | Email | A small SMTP client written for the project | Sends the one-time code; no external library needed. |
-| Hosting of the web app | Vercel | Serves the static Expo web build over HTTPS. |
+| Online hosting | Vercel (static site + `vercel-php` functions) | Serves the Expo web build and runs the same PHP API under `/api`, over HTTPS. |
+| Online database | Aiven MySQL 8.4 | Managed MySQL reachable from Vercel, with an encrypted (TLS) connection. |
+| Online email | Gmail SMTP with an App Password | Delivers the one-time codes on the public site. |
 
 ## 3. System architecture
 
@@ -59,6 +62,10 @@ Laragon. A web version of the interface is prepared for Vercel so that it can be
 * **Configuration.** Secrets (pepper, database password, SMTP password) live only in `backend/.env` on the server. The
   server refuses to start if the configuration is unsafe, for example if the pepper is missing, CORS is a wildcard, or the
   development one-time-code mode is enabled in production.
+* **Online version.** On Vercel, `api/index.php` simply includes `backend/public/index.php`, so the public site runs the
+  same PHP code. The website and the API share one domain, so the session cookie stays first-party. Settings come from
+  Vercel's encrypted environment variables instead of `.env`, the database is Aiven MySQL (TLS verified against Aiven's CA
+  certificate), and codes are emailed through Gmail.
 
 ## 4. Database design
 
@@ -226,7 +233,9 @@ failed the five-minute expiry test; and no longer marking codes as used failed 4
 only once").
 
 **Not yet verified against MySQL.** The MySQL schema (`database/schema.sql`), the MySQL form of the rate-limit query and
-the duplicate-key error code (1062) were not exercised by this run. On a computer where XAMPP or Laragon works, run:
+the duplicate-key error code (1062) were not exercised by this run. The schema and the rate-limit query were later used on
+the online MySQL database (section 12.4), but the test suite itself has not run against MySQL. On a computer where XAMPP or
+Laragon works, run:
 
 ```
 cd backend
@@ -276,7 +285,27 @@ not readable from JavaScript; profile page; the administration page listing user
 "Access denied (403)" for a normal user; sign-out and redirect. Two bugs found by this process (a confusing error when the
 API address was wrong, and a spurious "session ended" message at start-up) were fixed.
 
-### 12.4 Screenshot checklist (to be captured by the student from the real system)
+### 12.4 Tests of the online version (real MySQL and real email)
+
+The deployed site at https://puit24210065.vercel.app was tested on 11 October 2026.
+
+* **Database setup:** `backend/database/schema.sql` was run unchanged on Aiven MySQL 8.4.11 over a verified TLS
+  connection and created the four tables. This is the first run of the project against real MySQL.
+* **Automated live checks (17 passed, 0 failed):** health check reaching the database; `Strict-Transport-Security` and
+  `no-store` headers; registration (new account gets the `user` role); duplicate email in different letter case refused
+  (409); invalid input refused (422); wrong password refused with the generic message (this also exercises the MySQL
+  form of the rate-limit query); correct password sends the code **by email**, and the response does not contain the
+  code; masked email hint; a wrong code is refused with 4 attempts left; no session without the code (401); the admin
+  route refused without a session (401); CORS allows only the site's own origin; finishing a sign-in from another
+  origin is refused (403).
+* **Manual check:** an account was registered on the public site with a personal Gmail address, the emailed code arrived
+  and was entered, and the account was signed in. That account was then made an administrator directly in the database
+  (the online equivalent of `bin/set-role.php`).
+* **Problem found and fixed:** the first live run failed to send email (SMTP error 535, "username and password not
+  accepted") because the App Password had been created in a different Google account from the sender address. The
+  application handled it safely: it answered 503 and kept no code. Using the matching account fixed it.
+
+### 12.5 Screenshot checklist (to be captured by the student from the real system)
 
 No screenshots are included in this document yet. Capture these after starting the backend and the app, and insert
 them here:
@@ -310,8 +339,9 @@ them here:
 * The second factor is an emailed code, which is only as secure as the mailbox. Authenticator apps (TOTP) or WebAuthn
   passkeys are stronger.
 * Rate limits are stored in MySQL and keyed by IP address, which can be inaccurate behind shared networks or proxies.
-* The public website requires the PHP API and database to be hosted separately (see `docs/DEPLOYMENT.md`); Vercel alone
-  hosts only the interface. Online sign-in has not been deployed or tested by the author of this document.
+* The online version depends on three free or trial services (Vercel, Aiven, Gmail). Gmail limits sending to about 500
+  emails a day, codes can land in spam folders, and the first request after a quiet period can be slow while Vercel
+  starts the PHP function.
 
 ## 14. Conclusion
 
@@ -322,8 +352,9 @@ protected with a per-password salt plus a server-side pepper. Sessions are rando
 be revoked, and the web version avoids storing tokens where scripts can read them.
 
 The interface was built, type-checked, unit-tested and compiled for the web. The backend's 60 tests pass, and the whole
-system was tested end to end over HTTP and in a browser with the real PHP code. These runs used SQLite in place of MySQL,
-so a final run against MySQL is still needed.
+system was tested end to end over HTTP and in a browser with the real PHP code, using SQLite in place of MySQL. The
+online version was then tested against real MySQL with real emailed codes, and sign-in works there. The full test suite
+has still to be run against a local XAMPP or Laragon MySQL.
 
 ## 15. Instructions for running the application
 
@@ -345,5 +376,5 @@ npx expo start                  # press w for the browser
 ```
 
 To make an administrator: register in the app, then `php bin/set-role.php you@example.com admin`.
-For the public website: see `docs/DEPLOYMENT.md` (Vercel root directory `mobile`, build command
-`npx expo export --platform web`, output directory `dist`, environment variable `EXPO_PUBLIC_API_URL`).
+The online version is at https://puit24210065.vercel.app. How it is set up (Vercel, Aiven MySQL, Gmail) is described in
+`docs/DEPLOYMENT.md`, section 0.

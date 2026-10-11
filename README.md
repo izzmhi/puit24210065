@@ -34,8 +34,9 @@ login-auth-assignment/
 
 > **Test status:** the backend suite (60 tests) passes when run with PHP 8.3 in WebAssembly against SQLite, and
 > the web app passes an end-to-end browser test against that real PHP API (see [REPORT.md](REPORT.md), section 12).
-> It has **not yet been run against a real MySQL server**. Run `php tests/run.php` with XAMPP or Laragon (Step 5)
-> to confirm the MySQL-specific parts too.
+> The online version, **https://puit24210065.vercel.app**, runs the same PHP code on real MySQL (Aiven) with emailed
+> codes, and sign-in works there. The test suite has not yet been run against MySQL: run `php tests/run.php` with
+> XAMPP or Laragon (Step 5).
 
 ---
 
