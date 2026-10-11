@@ -87,7 +87,15 @@ export async function apiRequest<T>(path: string, { method = 'GET', body, signal
   }
 
   if (!response.ok) {
-    const error = data?.error ?? {};
+    if (!data || typeof data.error !== 'object' || data.error === null) {
+      // Not an answer from our API (for example a static host with no backend behind it).
+      throw new ApiError(
+        response.status,
+        'bad_response',
+        `The API did not answer correctly (HTTP ${response.status}). Check that the backend is running and the API address is correct.`,
+      );
+    }
+    const error = data.error;
     const retry = Number(response.headers.get('Retry-After'));
     const apiError = new ApiError(
       response.status,
