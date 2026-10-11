@@ -22,11 +22,7 @@ export default function Dashboard() {
           <Text style={styles.text}>You are an administrator and can see the list of registered users.</Text>
           <Link href="/admin" style={styles.link}>Open the admin page</Link>
         </View>
-      ) : (
-        <Text style={[styles.small, { marginTop: 12 }]}>
-          The admin page is only available to users with the admin role.
-        </Text>
-      )}
+      ) : null}
     </View>
   );
 }
