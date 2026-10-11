@@ -27,6 +27,11 @@ site works end to end.
 These are also in `mobile/vercel.json`, which additionally adds security headers and rewrites every path to
 `index.html` (the app uses client-side routing, so a reload of `/dashboard` must still serve the app).
 
+**If the project's Root Directory is left at `.` (the repository root)**, which is how the project
+`puit24210065` is set up, the root-level `vercel.json` is used instead. It runs the same steps inside the `mobile`
+folder: install `cd mobile && npm install`, build `cd mobile && npx expo export --platform web`, output
+`mobile/dist`. Use one setup or the other, not both.
+
 ### Environment variable (Project → Settings → Environment Variables)
 
 | Name | Value | Scope |
