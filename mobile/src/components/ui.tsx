@@ -57,12 +57,37 @@ export function Message({ kind, children }: { kind: keyof typeof messageColors; 
   );
 }
 
-export function InfoRow({ label, value }: { label: string; value: string }) {
+export function Box({ children, top }: { children: React.ReactNode; top?: boolean }) {
+  return <View style={[styles.box, top && styles.boxTop]}>{children}</View>;
+}
+
+// One "label | value" line inside a box.
+export function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Text style={styles.text}>
-      <Text style={styles.bold}>{label}: </Text>
-      {value}
-    </Text>
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      {typeof children === 'string' ? <Text style={styles.detailValue}>{children}</Text> : children}
+    </View>
+  );
+}
+
+export function RoleBadge({ role }: { role: string }) {
+  const admin = role === 'admin';
+  return (
+    <View style={[styles.badge, { backgroundColor: admin ? '#dde8f7' : '#e8eaed' }]}>
+      <Text style={[styles.badgeText, { color: admin ? BLUE : '#444444' }]}>{role}</Text>
+    </View>
+  );
+}
+
+// Circle with the user's initials, e.g. "Amina Yusuf" -> "AY".
+export function Avatar({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/);
+  const initials = ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  return (
+    <View style={styles.avatar}>
+      <Text style={styles.avatarText}>{initials || '?'}</Text>
+    </View>
   );
 }
 

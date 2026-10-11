@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const BLUE = '#1f4e8c';
 
 export const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#ffffff' },
+  page: { flex: 1, backgroundColor: '#eef1f5' },
   header: {
     backgroundColor: BLUE,
     paddingVertical: 12,
@@ -18,9 +18,34 @@ export const styles = StyleSheet.create({
   nav: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   navLink: { color: '#ffffff', fontSize: 15 },
 
-  body: { padding: 16, alignItems: 'center' },
+  body: { padding: 16, paddingTop: 24, alignItems: 'center' },
   content: { width: '100%', maxWidth: 800 },
-  form: { width: '100%', maxWidth: 420 },
+  form: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+
+  // white box used for forms and the dashboard
+  box: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d3d9e2',
+    borderRadius: 4,
+    padding: 20,
+    marginBottom: 16,
+  },
+  boxTop: { borderTopWidth: 3, borderTopColor: BLUE },
+  formHeading: { fontSize: 20, fontWeight: 'bold', color: '#222222' },
+  formIntro: { fontSize: 14, color: '#555555', marginTop: 4, marginBottom: 6 },
+  divider: { height: 1, backgroundColor: '#e3e7ed', marginVertical: 14 },
+  center: { textAlign: 'center' },
+
+  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#ffffff', fontSize: 17, fontWeight: 'bold' },
+  name: { fontSize: 17, fontWeight: 'bold', color: '#222222' },
+
+  detailRow: { flexDirection: 'row', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#eef0f3' },
+  detailLabel: { width: 120, fontSize: 14, color: '#555555' },
+  detailValue: { flex: 1, fontSize: 14, color: '#222222' },
+  badge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 3 },
+  badgeText: { fontSize: 13, fontWeight: 'bold' },
 
   heading: { fontSize: 22, fontWeight: 'bold', color: '#222222', marginTop: 8, marginBottom: 12 },
   text: { fontSize: 15, color: '#222222', marginBottom: 8, lineHeight: 21 },

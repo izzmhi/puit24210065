@@ -1,11 +1,11 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Button, Field, Message } from '../../src/components/ui';
+import { Box, Button, Field, Message } from '../../src/components/ui';
 import { useAuth } from '../../src/lib/auth';
 import { describeError } from '../../src/lib/errors';
 import { normalizeEmail, validateEmail } from '../../src/lib/validation';
-import { styles } from '../../src/styles';
+import { BLUE, styles } from '../../src/styles';
 
 export default function SignIn() {
   const router = useRouter();
@@ -40,36 +40,42 @@ export default function SignIn() {
 
   return (
     <View style={styles.form}>
-      <Text style={styles.heading}>Login</Text>
+      <Box top>
+        <Text style={styles.formHeading}>Login</Text>
+        <Text style={styles.formIntro}>Enter your email and password to continue.</Text>
 
-      {flash ? <Message kind="success">{flash}</Message> : null}
-      {error ? <Message kind="error">{error}</Message> : null}
+        {flash ? <Message kind="success">{flash}</Message> : null}
+        {error ? <Message kind="error">{error}</Message> : null}
 
-      <Field
-        label="Email"
-        value={email}
-        onChangeText={(t) => {
-          setEmail(t);
-          if (flash) clearFlash();
-        }}
-        error={emailError}
-        keyboardType="email-address"
-        autoComplete="email"
-      />
-      <Field
-        label="Password"
-        value={password}
-        onChangeText={setPassword}
-        error={passwordError}
-        secureTextEntry
-        autoComplete="current-password"
-        onSubmitEditing={submit}
-      />
+        <Field
+          label="Email"
+          value={email}
+          onChangeText={(t) => {
+            setEmail(t);
+            if (flash) clearFlash();
+          }}
+          error={emailError}
+          keyboardType="email-address"
+          autoComplete="email"
+        />
+        <Field
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          error={passwordError}
+          secureTextEntry
+          autoComplete="current-password"
+          onSubmitEditing={submit}
+        />
 
-      <Button title="Login" onPress={submit} loading={busy} />
+        <Button title="Login" onPress={submit} loading={busy} />
 
-      <Text style={styles.small}>Do not have an account?</Text>
-      <Link href="/register" style={styles.link}>Register here</Link>
+        <View style={styles.divider} />
+        <Text style={[styles.small, styles.center, { marginTop: 0 }]}>
+          Do not have an account?{' '}
+          <Link href="/register" style={{ color: BLUE, textDecorationLine: 'underline' }}>Register here</Link>
+        </Text>
+      </Box>
     </View>
   );
 }

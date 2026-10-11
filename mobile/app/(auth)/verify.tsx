@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Button, Field, Message } from '../../src/components/ui';
+import { Box, Button, Field, Message } from '../../src/components/ui';
 import { useAuth } from '../../src/lib/auth';
 import { describeError } from '../../src/lib/errors';
 import { validateOtp } from '../../src/lib/validation';
@@ -61,36 +61,38 @@ export default function Verify() {
 
   return (
     <View style={styles.form}>
-      <Text style={styles.heading}>Verification code</Text>
-      <Text style={styles.text}>
-        {pending.delivery === 'email'
-          ? `A 6-digit code was sent to ${pending.emailHint}. It is valid for 5 minutes.`
-          : 'Enter the 6-digit code to finish logging in.'}
-      </Text>
+      <Box top>
+        <Text style={styles.formHeading}>Verification code</Text>
+        <Text style={styles.formIntro}>
+          {pending.delivery === 'email'
+            ? `A 6-digit code was sent to ${pending.emailHint}. It is valid for 5 minutes.`
+            : 'Enter the 6-digit code to finish logging in.'}
+        </Text>
 
-      {pending.delivery === 'development' && pending.devOtp ? (
-        <Message kind="warn">
-          Development mode (no email server): your code is{' '}
-          <Text style={styles.bold}>{pending.devOtp}</Text>
-        </Message>
-      ) : null}
-      {info ? <Message kind="success">{info}</Message> : null}
-      {error ? <Message kind="error">{error}</Message> : null}
+        {pending.delivery === 'development' && pending.devOtp ? (
+          <Message kind="warn">
+            Development mode (no email server): your code is{' '}
+            <Text style={styles.bold}>{pending.devOtp}</Text>
+          </Message>
+        ) : null}
+        {info ? <Message kind="success">{info}</Message> : null}
+        {error ? <Message kind="error">{error}</Message> : null}
 
-      <Field
-        label="Code"
-        value={code}
-        onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
-        error={codeError}
-        keyboardType="number-pad"
-        autoComplete="one-time-code"
-        maxLength={6}
-        onSubmitEditing={submit}
-      />
+        <Field
+          label="Code"
+          value={code}
+          onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
+          error={codeError}
+          keyboardType="number-pad"
+          autoComplete="one-time-code"
+          maxLength={6}
+          onSubmitEditing={submit}
+        />
 
-      <Button title="Verify" onPress={submit} loading={busy} />
-      <Button title="Send a new code" onPress={resend} loading={resending} secondary />
-      <Button title="Back to login" onPress={cancel} secondary />
+        <Button title="Verify" onPress={submit} loading={busy} />
+        <Button title="Send a new code" onPress={resend} loading={resending} secondary />
+        <Button title="Back to login" onPress={cancel} secondary />
+      </Box>
     </View>
   );
 }

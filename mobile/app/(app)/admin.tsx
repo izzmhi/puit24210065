@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { Button, formatDate, Message } from '../../src/components/ui';
+import { Box, Button, formatDate, Message } from '../../src/components/ui';
 import { AdminUsersResponse, api, ApiError } from '../../src/lib/api';
 import { describeError } from '../../src/lib/errors';
 import { styles } from '../../src/styles';
@@ -43,7 +43,7 @@ export default function Admin() {
       {error ? <Message kind="error">{error}</Message> : null}
 
       {data ? (
-        <View>
+        <Box top>
           <Text style={styles.text}>
             Total users: {data.total} ({data.summary.admins} admin, {data.summary.users} user). Active sessions:{' '}
             {data.summary.active_sessions}.
@@ -69,7 +69,7 @@ export default function Admin() {
               ))}
             </View>
           </ScrollView>
-        </View>
+        </Box>
       ) : null}
 
       <View style={{ maxWidth: 200 }}>

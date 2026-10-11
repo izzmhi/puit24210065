@@ -1,7 +1,7 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Button, Field, Message } from '../../src/components/ui';
+import { Box, Button, Field, Message } from '../../src/components/ui';
 import { ApiError } from '../../src/lib/api';
 import { useAuth } from '../../src/lib/auth';
 import { describeError } from '../../src/lib/errors';
@@ -12,7 +12,7 @@ import {
   validateName,
   validatePassword,
 } from '../../src/lib/validation';
-import { styles } from '../../src/styles';
+import { BLUE, styles } from '../../src/styles';
 
 type Errors = { name?: string | null; email?: string | null; password?: string | null; confirm?: string | null };
 
@@ -57,42 +57,48 @@ export default function Register() {
 
   return (
     <View style={styles.form}>
-      <Text style={styles.heading}>Register</Text>
+      <Box top>
+        <Text style={styles.formHeading}>Register</Text>
+        <Text style={styles.formIntro}>Fill in the form to create a new account.</Text>
 
-      {error ? <Message kind="error">{error}</Message> : null}
+        {error ? <Message kind="error">{error}</Message> : null}
 
-      <Field label="Full name" value={name} onChangeText={setName} error={errors.name} autoCapitalize="words" />
-      <Field
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        error={errors.email}
-        keyboardType="email-address"
-        autoComplete="email"
-      />
-      <Field
-        label="Password"
-        value={password}
-        onChangeText={setPassword}
-        error={errors.password}
-        secureTextEntry
-        autoComplete="new-password"
-      />
-      <Text style={styles.small}>At least {PASSWORD_MIN} characters, with a letter and a number.</Text>
-      <Field
-        label="Confirm password"
-        value={confirm}
-        onChangeText={setConfirm}
-        error={errors.confirm}
-        secureTextEntry
-        autoComplete="new-password"
-        onSubmitEditing={submit}
-      />
+        <Field label="Full name" value={name} onChangeText={setName} error={errors.name} autoCapitalize="words" />
+        <Field
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          error={errors.email}
+          keyboardType="email-address"
+          autoComplete="email"
+        />
+        <Field
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          error={errors.password}
+          secureTextEntry
+          autoComplete="new-password"
+        />
+        <Text style={styles.small}>At least {PASSWORD_MIN} characters, with a letter and a number.</Text>
+        <Field
+          label="Confirm password"
+          value={confirm}
+          onChangeText={setConfirm}
+          error={errors.confirm}
+          secureTextEntry
+          autoComplete="new-password"
+          onSubmitEditing={submit}
+        />
 
-      <Button title="Register" onPress={submit} loading={busy} />
+        <Button title="Register" onPress={submit} loading={busy} />
 
-      <Text style={styles.small}>Already have an account?</Text>
-      <Link href="/sign-in" style={styles.link}>Back to login</Link>
+        <View style={styles.divider} />
+        <Text style={[styles.small, styles.center, { marginTop: 0 }]}>
+          Already have an account?{' '}
+          <Link href="/sign-in" style={{ color: BLUE, textDecorationLine: 'underline' }}>Back to login</Link>
+        </Text>
+      </Box>
     </View>
   );
 }
