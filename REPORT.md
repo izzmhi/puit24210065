@@ -1,10 +1,11 @@
 # Secure Login Authentication System with Two-Factor Authentication and Role-Based Access
 
-**Student name:** ______________________  
-**Student number:** ______________________  
+**Student name:** Addo Eric  
+**Student number:** PUIT24210065  
+**Institution:** Pentecost University  
 **Course / module:** ______________________  
 **Lecturer:** ______________________  
-**Date:** ______________________
+**Date:** October 2026
 
 ---
 
