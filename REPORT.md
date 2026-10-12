@@ -41,6 +41,9 @@ public link.
 | Online database | Aiven MySQL 8.4 | Managed MySQL reachable from Vercel, with an encrypted (TLS) connection. |
 | Online email | Gmail SMTP with an App Password | Delivers the one-time codes on the public site. |
 
+Development tools: Visual Studio Code, Git and GitHub, and the AI coding assistant Claude Opus 5.5 (Anthropic), which was
+used to help write the code, tests and documentation.
+
 ## 3. System architecture
 
 ```
