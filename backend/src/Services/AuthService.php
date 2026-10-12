@@ -336,6 +336,21 @@ final class AuthService
      * password AND the emailed code were correct, which proves the person controls that inbox.
      * Registering with a listed email (or any name) never gives admin by itself.
      */
+    /**
+     * "$argon2id$v=19$m=65536,t=4,p=1$<salt>$<hash>" -> "$argon2id$v=19$m=65536,t=4,p=1$<salt>$…"
+     * "$2y$12$<22-char salt><31-char hash>"          -> "$2y$12$<salt>…"
+     */
+    public static function hashPreview(string $hash): string
+    {
+        if (preg_match('/^(\$argon2[a-z]*\$v=\d+\$[^$]+\$[^$]+)\$/', $hash, $m) === 1) {
+            return $m[1] . '$…';
+        }
+        if (preg_match('/^(\$2[aby]\$\d{2}\$.{22})/', $hash, $m) === 1) {
+            return $m[1] . '…';
+        }
+        return '(hidden)';
+    }
+
     private function promoteListedAdmin(int $userId): void
     {
         $admins = array_map('strtolower', $this->config->list('ADMIN_EMAILS'));
@@ -399,12 +414,17 @@ final class AuthService
         $offset = max(0, $offset);
 
         $stmt = $this->pdo->prepare(
-            'SELECT id, name, email, role, created_at, last_login_at FROM users ORDER BY id ASC LIMIT ? OFFSET ?'
+            'SELECT id, name, email, role, created_at, last_login_at, password_hash FROM users ORDER BY id ASC LIMIT ? OFFSET ?'
         );
         $stmt->bindValue(1, $limit, PDO::PARAM_INT);
         $stmt->bindValue(2, $offset, PDO::PARAM_INT);
         $stmt->execute();
-        $users = array_map(fn(array $row): array => $this->publicUser($row), $stmt->fetchAll());
+        // Admins also see how each password is stored: algorithm, settings and salt only.
+        // The hash part itself is cut off, so the list never contains a crackable hash.
+        $users = array_map(
+            fn(array $row): array => $this->publicUser($row) + ['password_storage' => self::hashPreview((string) $row['password_hash'])],
+            $stmt->fetchAll()
+        );
 
         $counts = $this->pdo->query('SELECT role, COUNT(*) AS n FROM users GROUP BY role')->fetchAll();
         $byRole = ['admin' => 0, 'user' => 0];

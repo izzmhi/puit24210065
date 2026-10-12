@@ -10,6 +10,7 @@ export type User = {
   role: Role;
   created_at: string;
   last_login_at: string | null;
+  password_storage?: string; // admin list only: algorithm + salt, hash cut off
 };
 
 export class ApiError extends Error {

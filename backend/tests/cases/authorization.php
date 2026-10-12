@@ -17,11 +17,16 @@ test('admin: an administrator can list users, and password hashes are never incl
     Assert::same(2, count($res->body['users']));
     Assert::same(['admins' => 1, 'users' => 1, 'active_sessions' => 1], $res->body['summary']);
 
-    $json = json_encode($res->body);
-    Assert::notContains('password', $json);
-    Assert::notContains('$argon2', $json);
-    Assert::notContains('$2y$', $json);
-    Assert::same(['id', 'name', 'email', 'role', 'created_at', 'last_login_at'], array_keys($res->body['users'][0]));
+    // Admins see how a password is stored (algorithm + salt), but never the full hash.
+    $json = json_encode($res->body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    Assert::notContains('password_hash', $json);
+    foreach ($app->pdo->query('SELECT password_hash FROM users')->fetchAll(PDO::FETCH_COLUMN) as $fullHash) {
+        Assert::notContains($fullHash, $json, 'the full hash is never sent');
+        Assert::notContains(substr($fullHash, -20), $json, 'not even the end of the hash');
+    }
+    Assert::same(['id', 'name', 'email', 'role', 'created_at', 'last_login_at', 'password_storage'], array_keys($res->body['users'][0]));
+    Assert::true(str_ends_with($res->body['users'][0]['password_storage'], '…'), 'preview is cut off');
+    Assert::true(preg_match('/^\$(argon2id\$|2y\$)/', $res->body['users'][0]['password_storage']) === 1, 'shows the algorithm');
 });
 
 test('admin: a normal user is refused (403) on admin routes', function (TestApp $app) {

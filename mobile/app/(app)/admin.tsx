@@ -6,7 +6,7 @@ import { describeError } from '../../src/lib/errors';
 import { styles } from '../../src/styles';
 
 // Column widths so the table lines up (the table scrolls sideways on a phone).
-const widths = { id: 50, name: 170, email: 240, role: 80, last: 190 };
+const widths = { id: 50, name: 170, email: 240, role: 80, last: 190, stored: 360 };
 
 export default function Admin() {
   const [data, setData] = useState<AdminUsersResponse | null>(null);
@@ -57,6 +57,7 @@ export default function Admin() {
                 <Text style={[styles.cell, styles.bold, { width: widths.email }]}>Email</Text>
                 <Text style={[styles.cell, styles.bold, { width: widths.role }]}>Role</Text>
                 <Text style={[styles.cell, styles.bold, { width: widths.last }]}>Last login</Text>
+                <Text style={[styles.cell, styles.bold, { width: widths.stored }]}>Password as stored (hash, shortened)</Text>
               </View>
               {data.users.map((u) => (
                 <View key={u.id} style={styles.tableRow}>
@@ -65,10 +66,18 @@ export default function Admin() {
                   <Text style={[styles.cell, { width: widths.email }]}>{u.email}</Text>
                   <Text style={[styles.cell, { width: widths.role }]}>{u.role}</Text>
                   <Text style={[styles.cell, { width: widths.last }]}>{formatDate(u.last_login_at)}</Text>
+                  <Text style={[styles.cell, { width: widths.stored, fontFamily: 'monospace', fontSize: 12.5 }]}>
+                    {u.password_storage ?? '-'}
+                  </Text>
                 </View>
               ))}
             </View>
           </ScrollView>
+          <Text style={styles.small}>
+            The real password is never stored. The last column shows the start of the stored value: the algorithm
+            (argon2id), its settings and the random salt. The rest of the hash is hidden here. The pepper is kept only
+            on the server.
+          </Text>
         </Box>
       ) : null}
 
