@@ -40,6 +40,7 @@ final class AuthService
         private readonly Passwords $passwords,
         private readonly RateLimiter $limiter,
         private readonly OtpDelivery $delivery,
+        private readonly AuditLog $audit,
     ) {
         // The pepper also keys the OTP hash, so a leaked database cannot be used to
         // brute-force the (small) six-digit code space offline.
@@ -75,7 +76,7 @@ final class AuthService
             $insert = $this->pdo->prepare(
                 'INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)'
             );
-            $insert->execute([$clean['name'], $clean['email'], $hash, 'user', $now]);
+            $insert->execute([$clean['name'], $clean['email'], $hash, 'student', $now]);
         } catch (\PDOException $e) {
             if ((int) ($e->errorInfo[1] ?? 0) === 1062) { // duplicate key: lost a race with another request
                 $this->emailTaken();
@@ -83,11 +84,13 @@ final class AuthService
             throw $e;
         }
 
+        $id = (int) $this->pdo->lastInsertId();
+        $this->audit->record('register', $id, $ip);
         return [
-            'id' => (int) $this->pdo->lastInsertId(),
+            'id' => $id,
             'name' => $clean['name'],
             'email' => $clean['email'],
-            'role' => 'user',
+            'role' => 'student',
         ];
     }
 
@@ -120,19 +123,21 @@ final class AuthService
         $emailKey = 'login:email:' . $email;
         $this->assertNotLocked($emailKey, self::LOGIN_EMAIL_FAILURES_MAX, self::WINDOW);
 
-        $stmt = $this->pdo->prepare('SELECT id, name, email, password_hash FROM users WHERE email = ? LIMIT 1');
+        // Deleted accounts are treated exactly like unknown emails.
+        $stmt = $this->pdo->prepare('SELECT id, name, email, password_hash FROM users WHERE email = ? AND deleted_at IS NULL LIMIT 1');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
         if ($user === false) {
             $this->passwords->burn($password); // keep response time similar for unknown emails
-            $this->failLogin($emailKey);
+            $this->failLogin($emailKey, null, $ip, 'unknown email ' . Util::maskEmail($email));
         }
         if (!$this->passwords->verify($password, (string) $user['password_hash'])) {
-            $this->failLogin($emailKey);
+            $this->failLogin($emailKey, (int) $user['id'], $ip, 'wrong password');
         }
 
         $this->limiter->clear($emailKey);
+        $this->audit->record('password_ok', (int) $user['id'], $ip);
         if ($this->passwords->needsRehash((string) $user['password_hash'])) {
             $this->pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
                 ->execute([$this->passwords->hash($password), $user['id']]);
@@ -142,9 +147,10 @@ final class AuthService
         return $this->issueChallenge($user, $ip);
     }
 
-    private function failLogin(string $emailKey): never
+    private function failLogin(string $emailKey, ?int $userId, string $ip, string $detail): never
     {
         $this->limiter->hit($emailKey, self::WINDOW);
+        $this->audit->record('login_failed', $userId, $ip, $detail);
         // The same message and status for "unknown email" and "wrong password".
         throw new HttpException(401, 'invalid_credentials', 'Invalid email or password.');
     }
@@ -208,7 +214,7 @@ final class AuthService
         $stmt = $this->pdo->prepare(
             'SELECT c.created_at, c.used_at, c.expires_at, u.id, u.name, u.email
                FROM otp_challenges c INNER JOIN users u ON u.id = c.user_id
-              WHERE c.challenge_hash = ? LIMIT 1'
+              WHERE c.challenge_hash = ? AND u.deleted_at IS NULL LIMIT 1'
         );
         $stmt->execute([Tokens::hash((string) $challengeId)]);
         $row = $stmt->fetch();
@@ -279,6 +285,7 @@ final class AuthService
 
         if (!hash_equals((string) $row['otp_hash'], $this->otpHash($challengeId, $otp))) {
             $this->limiter->hit($userKey, self::WINDOW);
+            $this->audit->record('code_failed', (int) $row['user_id'], $ip);
             $remaining = max(0, self::OTP_MAX_ATTEMPTS - ((int) $row['attempts'] + 1));
             throw new HttpException(
                 401,
@@ -321,6 +328,7 @@ final class AuthService
 
         $this->limiter->clear($userKey);
         $this->promoteListedAdmin((int) $row['user_id']);
+        $this->audit->record('login_success', (int) $row['user_id'], $ip);
         $user = $this->findUser((int) $row['user_id']);
 
         return ['token' => $token, 'expires_at' => (string) Util::iso(Util::fmt($expires)), 'user' => $user];
@@ -336,21 +344,6 @@ final class AuthService
      * password AND the emailed code were correct, which proves the person controls that inbox.
      * Registering with a listed email (or any name) never gives admin by itself.
      */
-    /**
-     * "$argon2id$v=19$m=65536,t=4,p=1$<salt>$<hash>" -> "$argon2id$v=19$m=65536,t=4,p=1$<salt>$…"
-     * "$2y$12$<22-char salt><31-char hash>"          -> "$2y$12$<salt>…"
-     */
-    public static function hashPreview(string $hash): string
-    {
-        if (preg_match('/^(\$argon2[a-z]*\$v=\d+\$[^$]+\$[^$]+)\$/', $hash, $m) === 1) {
-            return $m[1] . '$…';
-        }
-        if (preg_match('/^(\$2[aby]\$\d{2}\$.{22})/', $hash, $m) === 1) {
-            return $m[1] . '…';
-        }
-        return '(hidden)';
-    }
-
     private function promoteListedAdmin(int $userId): void
     {
         $admins = array_map('strtolower', $this->config->list('ADMIN_EMAILS'));
@@ -381,7 +374,7 @@ final class AuthService
         $stmt = $this->pdo->prepare(
             'SELECT s.id AS session_id, u.id, u.name, u.email, u.role, u.created_at, u.last_login_at
                FROM sessions s INNER JOIN users u ON u.id = s.user_id
-              WHERE s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ? LIMIT 1'
+              WHERE s.token_hash = ? AND s.revoked_at IS NULL AND s.expires_at > ? AND u.deleted_at IS NULL LIMIT 1'
         );
         $stmt->execute([Tokens::hash((string) $token), Util::fmt(Util::now())]);
         $row = $stmt->fetch();
@@ -399,50 +392,12 @@ final class AuthService
         }
     }
 
-    public function logout(int $sessionId): void
+    /** @param array{user:array<string,mixed>, session_id:int} $session */
+    public function logout(array $session, string $ip): void
     {
         $this->pdo->prepare('UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL')
-            ->execute([Util::fmt(Util::now()), $sessionId]);
-    }
-
-    /* ------------------------------------------------------------------- admin */
-
-    /** @return array<string,mixed> */
-    public function listUsers(int $limit, int $offset): array
-    {
-        $limit = max(1, min(200, $limit));
-        $offset = max(0, $offset);
-
-        $stmt = $this->pdo->prepare(
-            'SELECT id, name, email, role, created_at, last_login_at, password_hash FROM users ORDER BY id ASC LIMIT ? OFFSET ?'
-        );
-        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
-        $stmt->bindValue(2, $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        // Admins also see how each password is stored: algorithm, settings and salt only.
-        // The hash part itself is cut off, so the list never contains a crackable hash.
-        $users = array_map(
-            fn(array $row): array => $this->publicUser($row) + ['password_storage' => self::hashPreview((string) $row['password_hash'])],
-            $stmt->fetchAll()
-        );
-
-        $counts = $this->pdo->query('SELECT role, COUNT(*) AS n FROM users GROUP BY role')->fetchAll();
-        $byRole = ['admin' => 0, 'user' => 0];
-        foreach ($counts as $count) {
-            $byRole[(string) $count['role']] = (int) $count['n'];
-        }
-        $active = $this->pdo->prepare('SELECT COUNT(*) FROM sessions WHERE revoked_at IS NULL AND expires_at > ?');
-        $active->execute([Util::fmt(Util::now())]);
-
-        return [
-            'users' => $users,
-            'total' => $byRole['admin'] + $byRole['user'],
-            'summary' => [
-                'admins' => $byRole['admin'],
-                'users' => $byRole['user'],
-                'active_sessions' => (int) $active->fetchColumn(),
-            ],
-        ];
+            ->execute([Util::fmt(Util::now()), $session['session_id']]);
+        $this->audit->record('logout', (int) $session['user']['id'], $ip);
     }
 
     /* ----------------------------------------------------------------- helpers */

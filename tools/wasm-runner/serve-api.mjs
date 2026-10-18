@@ -6,7 +6,7 @@
 //
 // While it runs you can also type in this window:
 //   admin you@example.com     make an account an administrator (runs backend/bin/set-role.php)
-//   user  you@example.com     make it a normal user again
+//   student you@example.com   make it a normal student again
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -100,11 +100,11 @@ http
   })
   .listen(port, () => {
     console.log(`PHP API (WebAssembly + SQLite, development only) running on http://localhost:${port}/api`);
-    console.log('Type "admin <email>" or "user <email>" to change a role. Press Ctrl+C to stop.');
+    console.log('Type "admin <email>" or "student <email>" to change a role. Press Ctrl+C to stop.');
   });
 
 readline.createInterface({ input: process.stdin }).on('line', async (line) => {
   const [role, email] = line.trim().split(/\s+/);
-  if ((role === 'admin' || role === 'user') && email) console.log(await setRole(email, role));
-  else if (line.trim()) console.log('Usage: admin <email>   or   user <email>');
+  if ((role === 'admin' || role === 'student') && email) console.log(await setRole(email, role));
+  else if (line.trim()) console.log('Usage: admin <email>   or   student <email>');
 });

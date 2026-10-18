@@ -85,4 +85,6 @@ export const styles = StyleSheet.create({
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#cccccc' },
   tableHead: { backgroundColor: '#eeeeee' },
   cell: { padding: 8, fontSize: 14, color: '#222222' },
+  deletedText: { color: '#888888', textDecorationLine: 'line-through' },
+  mono: { fontFamily: 'monospace', fontSize: 12.5, color: '#222222' },
 });

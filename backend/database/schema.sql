@@ -16,9 +16,11 @@ CREATE TABLE IF NOT EXISTS users (
   -- Output of password_hash(): algorithm, parameters and the random salt are inside this string.
   -- It is a hash of HMAC(password, pepper); the pepper itself is NOT stored here.
   password_hash VARCHAR(255)  NOT NULL,
-  role          ENUM('user','admin') NOT NULL DEFAULT 'user',
+  role          ENUM('student','admin') NOT NULL DEFAULT 'student',
   created_at    DATETIME      NOT NULL,
   last_login_at DATETIME      NULL,
+  -- Set when an admin deletes the account. The row is kept (marked as deleted) instead of erased.
+  deleted_at    DATETIME      NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_email (email),
   KEY idx_users_role (role)
@@ -68,4 +70,33 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   window_start DATETIME NOT NULL,
   PRIMARY KEY (bucket),
   KEY idx_rate_window (window_start)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Log of security events (logins, failed logins, codes, admin actions), used by the admin reports.
+-- Never contains passwords or codes.
+CREATE TABLE IF NOT EXISTS auth_events (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event      VARCHAR(40)  NOT NULL,
+  user_id    INT UNSIGNED NULL,
+  ip         VARCHAR(45)  NULL,
+  detail     VARCHAR(255) NULL,
+  created_at DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_events_created (created_at),
+  KEY idx_events_user (user_id),
+  CONSTRAINT fk_events_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Restore points: a saved copy of the configuration (each account's role and deleted status).
+-- Applying one changes only that configuration, never names, emails or password hashes.
+CREATE TABLE IF NOT EXISTS restore_points (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  label      VARCHAR(100) NOT NULL,
+  created_by INT UNSIGNED NULL,
+  created_at DATETIME     NOT NULL,
+  user_count INT UNSIGNED NOT NULL,
+  config     MEDIUMTEXT   NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_restore_created (created_at),
+  CONSTRAINT fk_restore_user FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -91,7 +91,7 @@ test('otp: correct code opens a session; the token is stored only as a hash', fu
     $token = $verify->body['token'];
     Assert::true(preg_match('/^[a-f0-9]{64}$/', $token) === 1, '256-bit random token');
     Assert::same('user@example.com', $verify->body['user']['email']);
-    Assert::same('user', $verify->body['user']['role']);
+    Assert::same('student', $verify->body['user']['role']);
     Assert::true(!isset($verify->body['user']['password_hash']));
 
     $session = $app->row('SELECT token_hash, revoked_at FROM sessions');

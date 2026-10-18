@@ -185,7 +185,7 @@ final class Env
     {
         $pdo = self::pdo();
         $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-        foreach (['sessions', 'otp_challenges', 'rate_limits', 'users'] as $table) {
+        foreach (['sessions', 'otp_challenges', 'rate_limits', 'auth_events', 'restore_points', 'users'] as $table) {
             $pdo->exec("TRUNCATE TABLE `$table`");
         }
         $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
@@ -247,7 +247,7 @@ final class TestApp
     }
 
     /** Inserts a user directly (fast). Use register() to test the real endpoint. */
-    public function createUser(string $email, string $role = 'user', string $password = Env::PASSWORD, string $name = 'Test User'): int
+    public function createUser(string $email, string $role = 'student', string $password = Env::PASSWORD, string $name = 'Test User'): int
     {
         $this->pdo->prepare('INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)')
             ->execute([$name, $email, Env::hashFor($password), $role, gmdate('Y-m-d H:i:s')]);

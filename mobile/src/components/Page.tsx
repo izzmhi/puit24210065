@@ -17,7 +17,14 @@ export function Page({ children }: { children: React.ReactNode }) {
           <View style={styles.nav}>
             <Link href="/dashboard" style={styles.navLink}>Dashboard</Link>
             <Link href="/profile" style={styles.navLink}>Profile</Link>
-            {user.role === 'admin' ? <Link href="/admin" style={styles.navLink}>Admin</Link> : null}
+            {user.role === 'admin' ? (
+              <>
+                <Link href="/admin" style={styles.navLink}>Users</Link>
+                <Link href="/backup" style={styles.navLink}>Backup</Link>
+                <Link href="/reports" style={styles.navLink}>Reports</Link>
+                <Link href="/password-demo" style={styles.navLink}>Password demo</Link>
+              </>
+            ) : null}
             <Pressable accessibilityRole="button" onPress={() => void signOut()}>
               <Text style={styles.navLink}>Logout</Text>
             </Pressable>

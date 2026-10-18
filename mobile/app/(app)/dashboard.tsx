@@ -35,8 +35,11 @@ export default function Dashboard() {
 
       {user.role === 'admin' ? (
         <Box>
-          <Text style={styles.text}>You are an administrator and can see the list of registered users.</Text>
-          <Link href="/admin" style={[styles.link, { marginTop: 0 }]}>Open the admin page</Link>
+          <Text style={styles.text}>You are an administrator.</Text>
+          <Link href="/admin" style={[styles.link, { marginTop: 4 }]}>Users: view, delete or restore accounts</Link>
+          <Link href="/backup" style={[styles.link, { marginTop: 8 }]}>Backup and restore points</Link>
+          <Link href="/reports" style={[styles.link, { marginTop: 8 }]}>Reports</Link>
+          <Link href="/password-demo" style={[styles.link, { marginTop: 8 }]}>Password demo (salt and pepper)</Link>
         </Box>
       ) : null}
     </View>

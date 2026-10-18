@@ -12,7 +12,7 @@ test('register: creates an ordinary user and returns no secrets', function (Test
         'name' => 'Amina Yusuf', 'email' => 'Amina@Example.com', 'password' => Env::PASSWORD,
     ]);
     Assert::same(201, $res->status);
-    Assert::same('user', $res->body['user']['role']);
+    Assert::same('student', $res->body['user']['role']);
     Assert::same('amina@example.com', $res->body['user']['email'], 'email is normalised to lower case');
     $json = json_encode($res->body);
     Assert::notContains('password', $json);
@@ -27,8 +27,8 @@ test('register: nobody becomes admin by registering (not even the first user, no
     $sneaky = $app->request('POST', '/api/register', [
         'name' => 'Sneaky User', 'email' => 'sneaky@example.com', 'password' => Env::PASSWORD, 'role' => 'admin',
     ]);
-    Assert::same('user', $first->body['user']['role']);
-    Assert::same('user', $sneaky->body['user']['role']);
+    Assert::same('student', $first->body['user']['role']);
+    Assert::same('student', $sneaky->body['user']['role']);
     Assert::same(0, (int) $app->row("SELECT COUNT(*) AS n FROM users WHERE role = 'admin'")['n']);
 });
 

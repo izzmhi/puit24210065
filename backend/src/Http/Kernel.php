@@ -8,6 +8,8 @@ use App\Config;
 use App\Mail\OtpDelivery;
 use App\Security\Passwords;
 use App\Security\RateLimiter;
+use App\Services\AdminService;
+use App\Services\AuditLog;
 use App\Services\AuthService;
 use App\Util;
 use PDO;
@@ -21,19 +23,18 @@ final class Kernel
     public const SESSION_COOKIE = 'sid';
 
     private readonly AuthService $auth;
+    private readonly AdminService $admin;
 
     public function __construct(
         private readonly Config $config,
         private readonly PDO $pdo,
         OtpDelivery $delivery,
     ) {
-        $this->auth = new AuthService(
-            $pdo,
-            $config,
-            new Passwords($config->get('APP_PEPPER')),
-            new RateLimiter($pdo),
-            $delivery,
-        );
+        $passwords = new Passwords($config->get('APP_PEPPER'));
+        $limiter = new RateLimiter($pdo);
+        $audit = new AuditLog($pdo);
+        $this->auth = new AuthService($pdo, $config, $passwords, $limiter, $delivery, $audit);
+        $this->admin = new AdminService($pdo, $passwords, $limiter, $audit);
     }
 
     public function handle(Request $request): Response
@@ -75,6 +76,16 @@ final class Kernel
             '/me' => ['GET' => fn(): Response => $this->me($request)],
             '/logout' => ['POST' => fn(): Response => $this->logout($request)],
             '/admin/users' => ['GET' => fn(): Response => $this->adminUsers($request)],
+            '/admin/delete-user' => ['POST' => fn(): Response => $this->adminAction($request, fn(array $a, array $in) => ['user' => $this->admin->deleteUser($a, $in['user_id'] ?? null, $request->ip), 'message' => 'The account was marked as deleted.'])],
+            '/admin/restore-user' => ['POST' => fn(): Response => $this->adminAction($request, fn(array $a, array $in) => ['user' => $this->admin->restoreUser($a, $in['user_id'] ?? null, $request->ip), 'message' => 'The account is active again.'])],
+            '/admin/restore-points' => [
+                'GET' => fn(): Response => $this->adminRead($request, fn() => ['restore_points' => $this->admin->listRestorePoints()]),
+                'POST' => fn(): Response => $this->adminAction($request, fn(array $a, array $in) => ['restore_point' => $this->admin->createRestorePoint($a, $in['label'] ?? null, $request->ip), 'message' => 'Restore point saved.'], 201),
+            ],
+            '/admin/restore-points/apply' => ['POST' => fn(): Response => $this->adminAction($request, fn(array $a, array $in) => $this->admin->applyRestorePoint($a, $in['id'] ?? null, $request->ip) + ['message' => 'Restore point applied. Only roles and deleted status were changed.'])],
+            '/admin/backup' => ['GET' => fn(): Response => $this->adminRead($request, fn(array $a) => $this->admin->backup($a, $request->ip))],
+            '/admin/reports' => ['GET' => fn(): Response => $this->adminRead($request, fn() => $this->admin->reports())],
+            '/admin/password-demo' => ['POST' => fn(): Response => $this->adminAction($request, fn(array $a, array $in) => $this->admin->passwordDemo($a, $in['password'] ?? null))],
         ];
 
         $path = $request->routePath();
@@ -163,7 +174,7 @@ final class Kernel
 
         // Logging out is idempotent: an already-invalid session just clears the cookie.
         try {
-            $this->auth->logout($this->auth->authenticate($token)['session_id']);
+            $this->auth->logout($this->auth->authenticate($token), $request->ip);
         } catch (HttpException $e) {
             if ($e->status !== 401) {
                 throw $e;
@@ -179,12 +190,40 @@ final class Kernel
 
     private function adminUsers(Request $request): Response
     {
-        $session = $this->requireSession($request);
-        $this->auth->requireRole($session['user'], 'admin'); // enforced here, whatever the app shows
-
+        $this->requireAdmin($request, false);
         $limit = filter_var($request->query['limit'] ?? 100, FILTER_VALIDATE_INT);
         $offset = filter_var($request->query['offset'] ?? 0, FILTER_VALIDATE_INT);
-        return Response::json($this->auth->listUsers($limit === false ? 100 : $limit, $offset === false ? 0 : $offset));
+        return Response::json($this->admin->listUsers($limit === false ? 100 : $limit, $offset === false ? 0 : $offset));
+    }
+
+    /**
+     * The admin check for every admin endpoint: a valid session whose role (read from the database)
+     * is "admin". State-changing requests made with the browser cookie also need the CSRF headers.
+     *
+     * @return array<string,mixed> the admin user
+     */
+    private function requireAdmin(Request $request, bool $changesState): array
+    {
+        [$token, $fromCookie] = $this->extractToken($request);
+        if ($changesState && $fromCookie) {
+            $this->assertCsrfSafe($request);
+        }
+        $session = $this->auth->authenticate($token);
+        $this->auth->requireRole($session['user'], 'admin'); // enforced here, whatever the app shows
+        return $session['user'];
+    }
+
+    /** @param callable(array<string,mixed>): array<string,mixed> $read */
+    private function adminRead(Request $request, callable $read): Response
+    {
+        return Response::json($read($this->requireAdmin($request, false)));
+    }
+
+    /** @param callable(array<string,mixed>, array<string,mixed>): array<string,mixed> $action */
+    private function adminAction(Request $request, callable $action, int $status = 200): Response
+    {
+        $admin = $this->requireAdmin($request, true);
+        return Response::json($action($admin, $request->json()), $status);
     }
 
     /* --------------------------------------------------------- authentication */

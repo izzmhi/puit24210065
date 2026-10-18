@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config';
 
-export type Role = 'admin' | 'user';
+export type Role = 'admin' | 'student';
 
 export type User = {
   id: number;
@@ -10,7 +10,10 @@ export type User = {
   role: Role;
   created_at: string;
   last_login_at: string | null;
-  password_storage?: string; // admin list only: algorithm + salt, hash cut off
+  // admin list only:
+  status?: 'active' | 'deleted';
+  deleted_at?: string | null;
+  password_storage?: string; // algorithm + salt, hash cut off
 };
 
 export class ApiError extends Error {
@@ -139,10 +142,33 @@ export type VerifyResponse = {
   token?: string; // native clients only
 };
 
-export type AdminUsersResponse = {
-  users: User[];
-  total: number;
-  summary: { admins: number; users: number; active_sessions: number };
+export type Summary = { admins: number; students: number; deleted: number; active_sessions: number };
+
+export type AdminUsersResponse = { users: User[]; total: number; summary: Summary };
+
+export type RestorePoint = { id: number; label: string; created_at: string; created_by: string | null; user_count: number };
+
+export type BackupResponse = { filename: string; tables: Record<string, number>; content: string };
+
+export type ReportsResponse = {
+  users: Summary & { total: number };
+  last_7_days: { events: Record<string, number>; logins_per_day: { date: string; logins: number }[] };
+  restore_points: number;
+  last_backup: string | null;
+  recent_events: { time: string; event: string; email: string | null; detail: string | null; ip: string | null }[];
+};
+
+export type PasswordDemoResponse = {
+  algorithm: string;
+  peppered_preview: string;
+  hash_1: string;
+  salt_1: string;
+  hash_2: string;
+  salt_2: string;
+  same_hash: boolean;
+  verify_correct_password: boolean;
+  verify_wrong_password: boolean;
+  verify_without_pepper: boolean;
 };
 
 export const api = {
@@ -157,4 +183,20 @@ export const api = {
   me: () => apiRequest<{ user: User }>('/me'),
   logout: () => apiRequest<{ message: string }>('/logout', { method: 'POST' }),
   adminUsers: () => apiRequest<AdminUsersResponse>('/admin/users'),
+  deleteUser: (userId: number) =>
+    apiRequest<{ message: string; user: User }>('/admin/delete-user', { method: 'POST', body: { user_id: userId } }),
+  restoreUser: (userId: number) =>
+    apiRequest<{ message: string; user: User }>('/admin/restore-user', { method: 'POST', body: { user_id: userId } }),
+  restorePoints: () => apiRequest<{ restore_points: RestorePoint[] }>('/admin/restore-points'),
+  createRestorePoint: (label: string) =>
+    apiRequest<{ message: string; restore_point: RestorePoint }>('/admin/restore-points', { method: 'POST', body: { label } }),
+  applyRestorePoint: (id: number) =>
+    apiRequest<{ message: string; changed: number; accounts_created_later: number }>('/admin/restore-points/apply', {
+      method: 'POST',
+      body: { id },
+    }),
+  backup: () => apiRequest<BackupResponse>('/admin/backup'),
+  reports: () => apiRequest<ReportsResponse>('/admin/reports'),
+  passwordDemo: (password: string) =>
+    apiRequest<PasswordDemoResponse>('/admin/password-demo', { method: 'POST', body: { password } }),
 };

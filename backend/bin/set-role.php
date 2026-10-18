@@ -8,7 +8,7 @@ declare(strict_types=1);
  * to someone with access to the server.
  *
  *   php bin/set-role.php you@example.com admin
- *   php bin/set-role.php you@example.com user
+ *   php bin/set-role.php you@example.com student
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -24,8 +24,8 @@ use App\Validation\Validator;
 
 $email = Validator::normalizeEmail($argv[1] ?? null);
 $role = $argv[2] ?? '';
-if ($email === '' || !in_array($role, ['admin', 'user'], true)) {
-    fwrite(STDERR, "Usage: php bin/set-role.php <email> <admin|user>\n");
+if ($email === '' || !in_array($role, ['admin', 'student'], true)) {
+    fwrite(STDERR, "Usage: php bin/set-role.php <email> <admin|student>\n");
     exit(2);
 }
 

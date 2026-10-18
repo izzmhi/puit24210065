@@ -69,4 +69,52 @@ final class Passwords
     {
         return base64_encode(hash_hmac('sha256', $password, $this->pepper, true));
     }
+
+    /**
+     * Step-by-step demonstration for the admin "Password demo" page. Nothing is stored.
+     * The pepper is never returned, and the peppered value is shortened so it cannot be reused.
+     *
+     * @return array<string,mixed>
+     */
+    public function demo(string $password): array
+    {
+        $first = $this->hash($password);
+        $second = $this->hash($password);
+        return [
+            'algorithm' => self::algorithm() === 'argon2id' ? 'argon2id' : 'bcrypt',
+            'peppered_preview' => substr($this->prehash($password), 0, 12) . '…',
+            'hash_1' => $first,
+            'salt_1' => self::saltOf($first),
+            'hash_2' => $second,
+            'salt_2' => self::saltOf($second),
+            'same_hash' => $first === $second,
+            'verify_correct_password' => $this->verify($password, $first),
+            'verify_wrong_password' => $this->verify($password . 'x', $first),
+            'verify_without_pepper' => password_verify($password, $first),
+        ];
+    }
+
+    /** The random salt inside a password_hash() result. */
+    public static function saltOf(string $hash): string
+    {
+        if (str_starts_with($hash, '$argon2')) {
+            return explode('$', $hash)[4] ?? '';
+        }
+        return str_starts_with($hash, '$2') ? substr($hash, 7, 22) : '';
+    }
+
+    /**
+     * How a password is stored, for the admin user list: algorithm, settings and salt, with the hash cut off.
+     * "$argon2id$v=19$m=65536,t=4,p=1$<salt>$<hash>" -> "$argon2id$v=19$m=65536,t=4,p=1$<salt>$…"
+     */
+    public static function preview(string $hash): string
+    {
+        if (preg_match('/^(\$argon2[a-z]*\$v=\d+\$[^$]+\$[^$]+)\$/', $hash, $m) === 1) {
+            return $m[1] . '$…';
+        }
+        if (preg_match('/^(\$2[aby]\$\d{2}\$.{22})/', $hash, $m) === 1) {
+            return $m[1] . '…';
+        }
+        return '(hidden)';
+    }
 }

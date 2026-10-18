@@ -8,14 +8,14 @@ use Tests\TestApp;
 
 test('admin: an administrator can list users, and password hashes are never included', function (TestApp $app) {
     $app->createUser('admin@example.com', 'admin', Env::PASSWORD, 'Admin Person');
-    $app->createUser('student@example.com', 'user', Env::PASSWORD, 'Student Person');
+    $app->createUser('student@example.com', 'student', Env::PASSWORD, 'Student Person');
     $token = $app->signIn('admin@example.com');
 
     $res = $app->request('GET', '/api/admin/users', null, $app->bearer($token));
     Assert::same(200, $res->status);
     Assert::same(2, $res->body['total']);
     Assert::same(2, count($res->body['users']));
-    Assert::same(['admins' => 1, 'users' => 1, 'active_sessions' => 1], $res->body['summary']);
+    Assert::same(['admins' => 1, 'students' => 1, 'deleted' => 0, 'active_sessions' => 1], $res->body['summary']);
 
     // Admins see how a password is stored (algorithm + salt), but never the full hash.
     $json = json_encode($res->body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -24,7 +24,7 @@ test('admin: an administrator can list users, and password hashes are never incl
         Assert::notContains($fullHash, $json, 'the full hash is never sent');
         Assert::notContains(substr($fullHash, -20), $json, 'not even the end of the hash');
     }
-    Assert::same(['id', 'name', 'email', 'role', 'created_at', 'last_login_at', 'password_storage'], array_keys($res->body['users'][0]));
+    Assert::same(['id', 'name', 'email', 'role', 'created_at', 'last_login_at', 'status', 'deleted_at', 'password_storage'], array_keys($res->body['users'][0]));
     Assert::true(str_ends_with($res->body['users'][0]['password_storage'], '…'), 'preview is cut off');
     Assert::true(preg_match('/^\$(argon2id\$|2y\$)/', $res->body['users'][0]['password_storage']) === 1, 'shows the algorithm');
 });
@@ -66,7 +66,7 @@ test('admin: the role is read from the database, so client-side tampering has no
     // Promotion happens only in the database (bin/set-role.php); it applies on the next request.
     $app->pdo->exec("UPDATE users SET role = 'admin' WHERE email = 'student@example.com'");
     Assert::same(200, $app->request('GET', '/api/admin/users', null, $app->bearer($token))->status);
-    $app->pdo->exec("UPDATE users SET role = 'user' WHERE email = 'student@example.com'");
+    $app->pdo->exec("UPDATE users SET role = 'student' WHERE email = 'student@example.com'");
     Assert::same(403, $app->request('GET', '/api/admin/users', null, $app->bearer($token))->status, 'demotion also applies immediately');
 });
 
@@ -90,11 +90,11 @@ test('admin emails: a listed email becomes admin only after password + code, nev
     $app = Env::app(['ADMIN_EMAILS' => 'Boss@Example.com, second@example.com']);
 
     $reg = $app->request('POST', '/api/register', ['name' => 'The Boss', 'email' => 'boss@example.com', 'password' => Env::PASSWORD]);
-    Assert::same('user', $reg->body['user']['role'], 'registering does not give admin');
+    Assert::same('student', $reg->body['user']['role'], 'registering does not give admin');
 
     // Password correct but code not entered yet: still a normal user in the database.
     $app->request('POST', '/api/login', ['email' => 'boss@example.com', 'password' => Env::PASSWORD]);
-    Assert::same('user', $app->row('SELECT role FROM users WHERE email = ?', ['boss@example.com'])['role']);
+    Assert::same('student', $app->row('SELECT role FROM users WHERE email = ?', ['boss@example.com'])['role']);
 
     $token = $app->signIn('boss@example.com');
     $me = $app->request('GET', '/api/me', null, $app->bearer($token));
@@ -107,7 +107,7 @@ test('admin emails: the name does not matter and unlisted emails stay users', fu
     $app->request('POST', '/api/register', ['name' => 'Eric Addo', 'email' => 'someone@example.com', 'password' => Env::PASSWORD]);
     $token = $app->signIn('someone@example.com');
     $me = $app->request('GET', '/api/me', null, $app->bearer($token));
-    Assert::same('user', $me->body['user']['role'], 'a name never grants admin');
+    Assert::same('student', $me->body['user']['role'], 'a name never grants admin');
     Assert::same(403, $app->request('GET', '/api/admin/users', null, $app->bearer($token))->status);
 });
 
